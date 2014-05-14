@@ -7,6 +7,7 @@ import IO;
 import lang::sl::IDE;
 import lang::sl::Syntax;
 import lang::sl::NameAnalyzer;
+import util::NameGraph;
 
 import Node;
 import ParseTree;

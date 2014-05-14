@@ -1,6 +1,7 @@
 module lang::sl::NameAnalyzer
 
 import lang::sl::AST;
+import util::NameGraph;
 import IO;
 import List;
 
@@ -131,37 +132,30 @@ public loc findLoc(Scope st, list[str] curScope, list[str] name)
   return NULL_LOC;
 }
 
-alias NameGraph
-  = tuple
-  [
-    list[loc] defs,
-    list[loc] uses,
-    rel[loc use, loc def] refs
-  ];
 
 public NameGraph getNameGraph(Machine m)
 {
-  list[loc] defs = [];
-  list[loc] uses = [];
+  set[loc] defs = {};
+  set[loc] uses = {};
   rel[loc,loc] refs = {};
   
   visit(m)
   {
     case Machine mach:
     {
-      defs += [mach@location];
+      defs += {mach@location};
     }
     case State s:
     {
-      defs += [s@location];
+      defs += {s@location};
     }
     case Transition t:
     {
-      defs += [t@location];
+      defs += {t@location};
     }
     case Ref r:
     {
-      uses += [r@location];
+      uses += {r@location};
       refs +={<r@location, r@ref>};
     }
   }
