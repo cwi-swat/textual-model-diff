@@ -7,10 +7,28 @@ import IO;
 import lang::sl::IDE;
 import lang::sl::Syntax;
 import lang::sl::NameAnalyzer;
+import lang::derric::NameRel;
+import lang::derric::BuildFileFormat;
 import util::NameGraph;
 
 import Node;
 import ParseTree;
+
+  
+void matchItDerric(loc v1, loc v2) {
+  src1 = readFile(v1);
+  src2 = readFile(v2);
+  pt1 = parseDerric(v1);
+  pt2 = parseDerric(v2);
+  ast1 = build(pt1);
+  ast2 = build(pt2);
+  ts1 = typeMap(ast1);
+  ts2 = typeMap(ast2);
+  r1 = resolveNames(ast1); 
+  r2 = resolveNames(ast2);
+  x = match(r1, r2, ts1, ts2, flatten(pt1), flatten(pt2));
+  iprintln(x);
+}
 
   
 void matchIt(loc v1, loc v2) {
@@ -33,7 +51,7 @@ lrel[str, loc] flatten(Tree t) {
   
   top-down-break visit (t) {
     case x:appl(prod(lex(_), _, _), _): l += [<"<x>", x@\loc>];
-    //case x:appl(prod(lit(_), _, _), _): l += [<"<x>", x@\loc>];
+    case x:appl(prod(label(_, lex(_)), _, _), _): l += [<"<x>", x@\loc>];
     case x:appl(prod(layouts(_), _, _), _): ;
   }
   return l;
@@ -58,13 +76,12 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   m = lcsMatrix(src1, src2, eq);
   df = getDiff(m, src1, src2, size(src1), size(src2), eq);
   
-  println("The DIFF:");
-  iprintln(df);
-  
-  int shift = 0;
+  //println("The DIFF:");
+  //iprintln(df);
+
   map[loc, loc] identify = ();
-  adds = {};
-  dels = {};
+  set[loc] adds = {};
+  set[loc] dels = {};
   
   for (e <- df) {
     switch (e) {
@@ -77,6 +94,7 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
           adds += { l2 | l2 in g2.defs };
         }
       case add(<y, l2>, int p): {
+        println("<l2> is added, in g2.defs? <l2 in g2.defs>");
         adds += { l2 | l2 in g2.defs };
       }     
       case remove(<x, l1>, int p): {

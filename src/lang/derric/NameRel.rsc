@@ -11,7 +11,17 @@ NameGraph resolveNames(FileFormat frm) {
   e = resolveInheritance(frm, structs)
     + resolveSequence(frm, structs)
     + resolveFields(frm, structs);
-  return <e<1>, e<0>, e>;
+  return <{frm.name@location} + structs<1> + structs<3>, e<0>, e>;
+}
+
+map[loc, str] typeMap(FileFormat frm) {
+  ts = ();
+  visit (frm) {
+    case FileFormat f: ts[f.name@location] = "Format"; 
+    case Term t: ts[t.name@location] = "Struct"; 
+    case Field f: ts[f.name@location] = "Field"; 
+  }
+  return ts;
 }
 
 rel[str, loc, str, loc] collectStructs(FileFormat frm)

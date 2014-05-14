@@ -19,11 +19,11 @@ module lang::derric::BuildFileFormat
 
 import lang::derric::FileFormat;
 import lang::derric::Syntax;
-import lang::derric::NormalizeAST;
 import ParseTree;
 
 
-
+Tree parseDerric(loc l) 
+  = parse(#start[FileFormat], l);
 
 lang::derric::FileFormat::FileFormat load(str src, loc l) 
   = build(parse(#start[FileFormat], src, l).top);
@@ -32,4 +32,4 @@ lang::derric::FileFormat::FileFormat load(loc l)
   = build(parse(#start[FileFormat], l).top);
 
 lang::derric::FileFormat::FileFormat build(Tree pt)
-  = normalize(implode(#lang::derric::FileFormat::FileFormat, pt));
+  = implode(#lang::derric::FileFormat::FileFormat, pt);
