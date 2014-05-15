@@ -16,6 +16,7 @@ import Node;
 import ParseTree;
 import Set;
 
+import lang::Delta::AST;
   
 void matchItDerric(loc v1, loc v2) {
   src1 = readFile(v1);
@@ -171,8 +172,13 @@ map[str, map[int, str]] METAMODEL = (
   "Transition": (0: "event", 1: "target")
 );
 
-void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
+
+/*void*/ Delta doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
     NameGraph g1, NameGraph g2, IDDiff mapping) {
+ 
+  list[Operation] additions = [];
+  list[Operation] changes = [];
+  list[Operation] deletions = [];  
  
   bool isId1(loc l) = l in g1.defs + g1.uses;
   bool isId2(loc l) = l in g2.defs + g2.uses;
@@ -207,6 +213,7 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
       }
     }
     println("delete <getName(n)> with id <myId>");
+    deletions += {op_del(myId, getName(n))};
   }
   
   loc addIt(node n) = addIt(n@location, n);
@@ -217,22 +224,27 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
      for (node k <- getChildren(n)) {
        if (isUse2(k)) {
          if (target <- g2.refs[getUseId(k)], original <- mapping.id, mapping.id[original] == target) {
-           println("set to original reference [<i>] of <newId> = <original>");
+           println("set to original reference [<i>] of <newId> = <original>");           
+           changes += {op_insert(newId, "<i>", original) };
          }
          else {
            println("set new reference [<i>] of <newId> = <target>");
+           changes += {op_insert(newId, "<i>", target) };
          }
        }
        else if (isDef2(k)) {
          println("set ref field [<i>] of <newId> = <getDefId2(k)>");
+         changes += {op_insert(newId, "<i>", getDefId2(k))};
        }
        else if (isAtom(k)) {
          println("set prim field [<i>] of <newId>  = <k>");
+         changes += {op_set(newId, "<i>", k, 0)};
        }
        else if (isContains2(k)) {
          if (node n := k) {
            kidId = addIt(n);
            println("set contains field [<i>] of <newId>  = <kidId>");
+           changes += {op_set(newId, "contains", kidId)};
          }
          else {
            throw "Error";
@@ -240,7 +252,7 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
        }
        i += 1;
      }
-     return newId;  
+     return newId;
   }
   
  void diffNodes(node n1, node n2) {
@@ -262,6 +274,7 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
            }
            else {
              println("set field [<i>] in <getDefId2(n2)> to <trg2>");
+             changes += {op_set(getDefId2(n2), "<i>", trg)}; 
            }
          } 
          //else if (isUse(k1), isDef(k2)) {
@@ -276,16 +289,19 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
            }
            else {
              println("set primitive field [<i>] in <n2> to <k2>");
+             changes += {op_set(n2, "<i>", k2)};
            }
          }
          else if (isUse1(k1), isContains1(k2)) {
            // always different
            newId = addIt(k2);
            println("set to contains field [<i>] in <getDefId2(n2)> to <newId>");
+           changes += {op_insert(getDefId2(n2), "contains", newId)};
          } 
          else if (isContains1(k1), isUse2(k2)) {
            deleteIt(k1);
            println("set to reference field [<i>] in <getDefId2(n2)> to <getUseId(k2)>");
+           changes += {op_insert(getDefId2(n2), "reference", getUseId(k2))};
          } 
          //else if (isDef(k1), isContains(k2)) {
          //;
@@ -349,6 +365,9 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
   for (<loc l1, _, node n1> <- r1, l1 notin mapping.id) {
     deleteIt(l1, n1);
   }
+  
+  
+  return Delta(additions,changes,deletions);
 }
   
   
