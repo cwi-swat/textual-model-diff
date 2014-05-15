@@ -182,6 +182,8 @@ map[str, map[int, str]] METAMODEL = (
   list[Operation] additions = [];
   list[Operation] changes = [];
   list[Operation] deletions = [];  
+  
+  int count = 0;
  
   bool isId1(loc l) = l in g1.defs + g1.uses;
   bool isId2(loc l) = l in g2.defs + g2.uses;
@@ -219,7 +221,14 @@ map[str, map[int, str]] METAMODEL = (
     deletions += [op_del(myId, getName(n))];
   }
   
-  loc addIt(node n) = addIt(n@location, n);
+  loc new(node n) {
+     l = n@location;
+     l.fragment = "<count>";
+     count += 1;
+     return l;
+  }
+  
+  loc addIt(node n) = addIt(new(n), n);
   
   loc addIt(loc newId, node n) {
      println("ADD <newId> = new <getName(n)>");
@@ -261,7 +270,78 @@ map[str, map[int, str]] METAMODEL = (
      return newId;
   }
   
- void diffNodes(loc id1, loc id2, node n1, node n2) {
+  void diffContainsNodes(loc id1, loc id2, list[int] path, node n1, node n2) {
+    cs1 = getChildren(n1);
+    cs2 = getChildren(n2);
+    i = 0;
+    for (<value k1, value k2> <- zip(cs1, cs2)) {
+      if (node k1n := k1, node k2n := k2, isUse1(k1n), isUse2(k2n)) {
+           loc trg1 = getOneFrom(g1.refs[getUseId(k1n)]);
+           loc trg2 = getOneFrom(g2.refs[getUseId(k2n)]);
+           if (trg1 in mapping.id && mapping.id[trg1] == trg2) {
+              ; // nothing
+           }
+           else {
+             changes += [op_insert(id1, path + [i], trg2)]; 
+           }
+         } 
+         else if (isAtom(k1), isAtom(k2)) {
+           if (k1 == k2) {
+             ; // nothing
+           }
+           else {
+             changes += [op_set(id2, path + [i], k2, k1)];
+           }
+         }
+         else if (node k1n := k1, node k2n := k2, isUse1(k1n), isContains1(k2n)) {
+           // always different
+           newId = addIt(k2n);
+           changes += [op_insert(id2, path + [i], newId)];
+         } 
+         else if (node k1n := k1, node k2n := k2, isContains1(k1n), isUse2(k2n)) {
+           deleteIt(k1n);
+           changes += [op_insert(id2, path + [i], getUseId(k2n))];
+         } 
+         else if (isList(k1), isList(k2)) {
+            bool eqWithRefs(node a, node b) {
+               if (getName(a) != getName(b)) {
+                  return false;
+               }
+               if (size(getChildren(a)) != size(getChildren(b))) {
+                 return false;
+               }
+               
+               for (<k1, k2> <- zip(getChildren(a), getChildren(b))) {
+                 if (isUse1(k1), isUse2(k2)) {
+                   trg1 = g1.refs[getUseId1(k1)];
+                   trg2 = g2.refs[getUseId2(k2)];
+                   if (mapping.id[trg1] == trg2) {
+                      return true;
+                   }
+                   return false;
+                 }
+               }
+            }
+         } 
+         else if (node k1n := k1, node k2n := k2, isContains1(k1n), isContains2(k2n)) {
+              if (getName(k1n) == getName(k2n), size(getChildren(k1n)) == size(getChildren(k2n))) {
+                 diffContainsNodes(id1, id2, path + [i], k1n, k2n);
+              }
+              else {
+                deleteIt(k1n);
+                newId = addIt(k2n);
+              }
+         } 
+         else {
+           println("k1 = <k1>");
+           println("k2 = <k2>");
+           throw "Error";
+         }
+         i += 1;
+     }  
+  }
+  
+  void diffNodes(loc id1, loc id2, node n1, node n2) {
       // TODO: remove getDefId on n1/n2, is now id1, id2
       cs1 = getChildren(n1);
       cs2 = getChildren(n2);
@@ -341,7 +421,7 @@ map[str, map[int, str]] METAMODEL = (
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isContains2(k2n)) {
               if (getName(k1n) == getName(k2n), size(getChildren(k1n)) == size(getChildren(k2n))) {
-                 diffNodes(k1n@location, k2n@location, k1n, k2n);
+                 diffContainsNodes(id1, id2, [i], k1n, k2n);
               }
               else {
                 deleteIt(k1n);
