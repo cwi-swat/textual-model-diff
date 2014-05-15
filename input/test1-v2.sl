@@ -8,10 +8,4 @@ machine m
       biach => bar
     end
     
-  foo
-  {
-  
-        
-    
-  }
 end
