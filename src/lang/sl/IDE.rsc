@@ -49,7 +49,7 @@ public lang::sl::AST::Machine sl_implode(Tree t)
 public void probeer()
 {
   loc f1 = |project://textual-model-diff/input/test1.sl|;  
-  loc f2 = |project://textual-model-diff/input/test2.sl|;
+  loc f2 = |project://textual-model-diff/input/test1-v2.sl|;
 
   matchIt(f1, f2);
 }
