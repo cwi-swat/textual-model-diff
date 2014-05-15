@@ -43,15 +43,23 @@ void matchIt(loc v1, loc v2) {
   ts2 = typeMap(ast2);
   r1 = getNameGraph(setScope(ast1)); 
   r2 = getNameGraph(setScope(ast2));
-  x = match(r1, r2, ts1, ts2, flattenAST(ast1, "name"), flattenAST(ast2, "name"));
-  iprintln(x);
+  x = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "State"), flattenAST(ast2, "name", ts2, "State"));
+  y = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Transition"), flattenAST(ast2, "name", ts2, "Transition"));
+  iprintln(merge(x, y));
 }
 
-lrel[str, loc] flattenAST(&T t, str id) {
+
+alias IDDiff = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
+
+IDDiff merge(IDDiff x, IDDiff y) {
+  return <x.added + y.added, x.deleted + x.deleted,  x.id + y.id>;
+} 
+
+lrel[str, loc] flattenAST(&T t, str id, map[loc, str] ts, str typ) {
   l = [];
   visit (t) {
     case n:str x(str name): {
-       if (x == id) {
+       if (x == id && n@location in ts, ts[n@location] == typ) {
          l += [<name, n@location>];
        }
     }
@@ -92,8 +100,8 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   //println("The DIFF:");
   //iprintln(df);
 
-  //df = detectMoves(df, ts1, ts2);
-  //iprintln(df);
+  df = detectMoves(df, ts1, ts2);
+  iprintln(df);
 
   map[loc, loc] identify = ();
   set[loc] adds = {};
