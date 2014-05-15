@@ -35,12 +35,12 @@ void matchItDerric(loc v1, loc v2) {
 
   
 void matchIt(loc v1, loc v2) {
-  src1 = readFile(v1);
-  src2 = readFile(v2);
-  pt1 = sl_parse(v1);
-  pt2 = sl_parse(v2);
-  ast1 = sl_implode(pt1);
-  ast2 = sl_implode(pt2);
+  str src1 = readFile(v1);
+  str src2 = readFile(v2);
+  Tree pt1 = sl_parse(v1);
+  Tree pt2 = sl_parse(v2);
+  Machine ast1 = sl_implode(pt1);
+  Machine ast2 = sl_implode(pt2);
   ts1 = typeMap(ast1);
   ts2 = typeMap(ast2);
   r1 = getNameGraph(setScope(ast1)); 
@@ -51,9 +51,12 @@ void matchIt(loc v1, loc v2) {
   z0 = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Machine"), flattenAST(ast2, "name", ts2, "Machine"));
   iddiff = merge(merge(merge(x, y), z), z0);
   iprintln(iddiff);
+
   ns1 = findNodes(ast1, r1, ts1);
   ns2 = findNodes(ast2, r2, ts2);
-  doIt(ns1, ns2, r1, r2, iddiff);
+  Delta delta = doIt(ns1, ns2, r1, r2, iddiff);
+
+  iprintln(delta);
 }
 
 
@@ -159,7 +162,7 @@ rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, st
   }
 
   top-down visit (ast) {
-    case node n => addIt(getId(n), ts[getId(n)], n) when isDef(n)
+    case node n: if (isDef(n))  addIt(getId(n), ts[getId(n)], n);
   }
 
   return r;
@@ -213,38 +216,41 @@ map[str, map[int, str]] METAMODEL = (
       }
     }
     println("delete <getName(n)> with id <myId>");
-    deletions += {op_del(myId, getName(n))};
+    deletions += [op_del(myId, getName(n))];
   }
   
   loc addIt(node n) = addIt(n@location, n);
   
   loc addIt(loc newId, node n) {
      println("ADD <newId> = new <getName(n)>");
+     additions += [op_new(newId, getName(n))];
      i = 0;
      for (node k <- getChildren(n)) {
        if (isUse2(k)) {
          if (target <- g2.refs[getUseId(k)], original <- mapping.id, mapping.id[original] == target) {
            println("set to original reference [<i>] of <newId> = <original>");           
-           changes += {op_insert(newId, "<i>", original) };
+           changes += [op_insert(newId, "<i>", original) ];
          }
          else {
-           println("set new reference [<i>] of <newId> = <target>");
-           changes += {op_insert(newId, "<i>", target) };
+           //FIXME:
+           //println("set new reference [<i>] of <newId> = <target>");
+           //changes += [op_insert(newId, "<i>", target) ];
+           ;
          }
        }
        else if (isDef2(k)) {
          println("set ref field [<i>] of <newId> = <getDefId2(k)>");
-         changes += {op_insert(newId, "<i>", getDefId2(k))};
+         changes += [op_insert(newId, "<i>", getDefId2(k))];
        }
        else if (isAtom(k)) {
          println("set prim field [<i>] of <newId>  = <k>");
-         changes += {op_set(newId, "<i>", k, 0)};
+         changes += [op_set(newId, "<i>", k, 0)];
        }
        else if (isContains2(k)) {
          if (node n := k) {
            kidId = addIt(n);
            println("set contains field [<i>] of <newId>  = <kidId>");
-           changes += {op_set(newId, "contains", kidId)};
+           changes += [op_set(newId, "contains", kidId)];
          }
          else {
            throw "Error";
@@ -264,17 +270,18 @@ map[str, map[int, str]] METAMODEL = (
       // NB: it's not necessary that name of n1 == name of n2.
       // (2 constructors for one object type).
       
+      
       int i = 0;
       for (<node k1, node k2> <- zip(cs1, cs2)) {
          if (isUse1(k1), isUse2(k2)) {
-           trg1 = getOneFrom(g1.refs[getUseId(k1)]);
-           trg2 = getOneFrom(g2.refs[getUseId(k2)]);
-           if (mapping.id[trg1] == trg2) {
+           loc trg1 = getOneFrom(g1.refs[getUseId(k1)]);
+           loc trg2 = getOneFrom(g2.refs[getUseId(k2)]);
+           if (trg1 in mapping.id && mapping.id[trg1] == trg2) {
               ; // nothing
            }
            else {
              println("set field [<i>] in <getDefId2(n2)> to <trg2>");
-             changes += {op_set(getDefId2(n2), "<i>", trg)}; 
+             changes += [op_insert(getDefId2(n2), "<i>", trg2)]; 
            }
          } 
          //else if (isUse(k1), isDef(k2)) {
@@ -289,19 +296,19 @@ map[str, map[int, str]] METAMODEL = (
            }
            else {
              println("set primitive field [<i>] in <n2> to <k2>");
-             changes += {op_set(n2, "<i>", k2)};
+             changes += [op_set(n2, "<i>", k2)];
            }
          }
          else if (isUse1(k1), isContains1(k2)) {
            // always different
            newId = addIt(k2);
            println("set to contains field [<i>] in <getDefId2(n2)> to <newId>");
-           changes += {op_insert(getDefId2(n2), "contains", newId)};
+           changes += [op_insert(getDefId2(n2), "contains", newId)];
          } 
          else if (isContains1(k1), isUse2(k2)) {
            deleteIt(k1);
            println("set to reference field [<i>] in <getDefId2(n2)> to <getUseId(k2)>");
-           changes += {op_insert(getDefId2(n2), "reference", getUseId(k2))};
+           changes += [op_insert(getDefId2(n2), "reference", getUseId(k2))];
          } 
          //else if (isDef(k1), isContains(k2)) {
          //;
@@ -367,7 +374,7 @@ map[str, map[int, str]] METAMODEL = (
   }
   
   
-  return Delta(additions,changes,deletions);
+  return delta(additions,changes,deletions);
 }
   
   
