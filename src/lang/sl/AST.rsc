@@ -16,13 +16,11 @@ anno list[str] Ref@scope;
 anno loc Ref@ref;
 
 data Machine
-  = mach(Name id, list[State] states)
-  ;
+  = mach(Name id, list[State] states);
   
 data State
-  = state(Name id, list[Transition] transitions) //imploded
-  | group(Name id, list[State] states)           //imploded
-  ;
+  = state(Name id, list[Transition] transitions)
+  | group(Name id, list[State] states);
 
 data Transition
   = trans(Name id, Ref ref);
@@ -31,7 +29,6 @@ data Ref
   = ref(str name)
   | ref(str name, Ref restName);
 
- 
 data Name
  = name(str name);
 
