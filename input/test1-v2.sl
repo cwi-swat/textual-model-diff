@@ -4,13 +4,14 @@ machine m
     barf => init
   end
   
+  state bar
+      biach => bar
+    end
+    
   foo
   {
   
         
-    state bar
-      biach => bar
-    end
     
   }
 end

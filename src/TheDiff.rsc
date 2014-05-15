@@ -79,6 +79,9 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   //println("The DIFF:");
   //iprintln(df);
 
+  df = detectMoves(df);
+  iprintln(df);
+
   map[loc, loc] identify = ();
   set[loc] adds = {};
   set[loc] dels = {};
@@ -93,6 +96,16 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
           dels += { l1 | l1 in g1.defs };
           adds += { l2 | l2 in g2.defs };
         }
+        
+      case move(<_, l1>, <_, l2>, _, _): 
+        if (ts1[l1]?, ts2[l2]?, ts1[l1] == ts2[l2]) {
+          identify += ( l1: l2 | l1 in g1.defs, l2 in g2.defs );
+        }
+        else {
+          dels += { l1 | l1 in g1.defs };
+          adds += { l2 | l2 in g2.defs };
+        }
+        
       case add(<y, l2>, int p): {
         println("<l2> is added, in g2.defs? <l2 in g2.defs>");
         adds += { l2 | l2 in g2.defs };
@@ -114,8 +127,23 @@ data Diff[&T]
   | same(&T t)
   | add(&T t, int pos)
   | remove(&T t, int pos)
+  | move(&T t1, &T t2, int from, int to)
   ;
   
+list[Diff[tuple[str,loc]]] detectMoves(list[Diff[tuple[str,loc]]] edits) {
+  // heuristic remove/add, add/remove pairs closest together.
+  
+  solve (edits) {
+    if ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, [*_, remove(<x, _>, _), *_] !:= xs2) {
+       edits = [*xs1, *xs2, move(<x, l2>, <x, l1>, from, to), *xs3];
+    }
+    if ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, [*_, add(<x, _>, _), *_] !:= xs2) {
+       edits = [*xs1, move(<x, l1>, <x, l2>, from, to), *xs2, *xs3];
+    }
+  }
+  
+  return edits;  
+}
 
 list[Diff[&T]] getDiff(map[int,map[int,int]] c, list[&T] x, list[&T] y, int i, int j,
    bool(&T, &T) equals) {

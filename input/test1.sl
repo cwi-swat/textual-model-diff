@@ -1,6 +1,6 @@
 machine m
 
-  state init
+  state x
     bang => foo.bar
   end
   
