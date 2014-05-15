@@ -74,6 +74,8 @@ lrel[str, loc] flattenAST(&T t, str id, map[loc, str] ts, str typ) {
   return l;
 }
   
+  
+  
 lrel[str, loc] flatten(Tree t) {
   l = [];
   
@@ -85,7 +87,6 @@ lrel[str, loc] flatten(Tree t) {
   return l;
 }
 
-  
 tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   match(NameGraph g1, NameGraph g2, map[loc, str] ts1, map[loc, str] ts2, 
     lrel[str,loc] src1, lrel[str, loc] src2) {
@@ -163,6 +164,12 @@ rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, st
   return r;
 }
 
+
+map[str, map[int, str]] METAMODEL = (
+  "group": (0: "name", 1: "states"),
+  "State": (0: "name", 1: "transitions"),
+  "Transition": (0: "event", 1: "target")
+);
 
 void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
     NameGraph g1, NameGraph g2, IDDiff mapping) {
