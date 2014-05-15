@@ -188,11 +188,11 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
     || (node n := x && (isId1(n@location) || isId2(n@location)));
   bool isList(value x) = (list[value] _ := x); 
   
-  bool isContains1(value x) = (node n := x && !isUse1(n) && !isDef1(n));
-  bool isContains2(value x) = (node n := x && !isUse2(n) && !isDef2(n));
+  bool isContains1(value x) = (node n := x && !isUse1(n) && !isDef1(n) && !isAtom(x));
+  bool isContains2(value x) = (node n := x && !isUse2(n) && !isDef2(n) && !isAtom(x));
  
- void deleteIt(node n) = deleteIt(n@location, n);
- void deleteIt(loc myId, node n) {
+  void deleteIt(node n) = deleteIt(n@location, n);
+  void deleteIt(loc myId, node n) {
     
     for (node k <- getChildren(n)) {
       if (isContains1(k)) {
