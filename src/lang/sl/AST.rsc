@@ -23,12 +23,21 @@ data State
   | group(Name id, list[State] states);
 
 data Transition
-  = trans(Name id, Ref ref);
+  = trans(Name id, Ref ref)
+  | trans(Name id, Ref ref, Expr expr)
+  ;
+  
   
 data Ref
   = ref(str name)
   | ref(str name, Ref restName);
 
+data Expr
+  = lit(real x)
+  | var(Ref id)
+  | add(Expr l, Expr r)
+  | gt(Expr l, Expr r)
+  ;
 data Name
  = name(str name);
 

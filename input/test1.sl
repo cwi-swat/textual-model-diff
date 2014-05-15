@@ -1,7 +1,7 @@
 machine m
 
   state init
-    bang => foo.bar
+    bang => foo.bar when bar > 1 + init
   end
   
   foo

@@ -25,12 +25,27 @@ public State setScope(Scope st, State g: group(Name name, list[State] states), l
 public Transition setScope(Scope st, Transition t: trans(Name name, Ref r), list[str] scope)
  = trans(name, setScope(st, r, [], scope))[@location = t.id@location][@scope = scope];
 
+public Transition setScope(Scope st, Transition t: trans(Name name, Ref r, Expr e), list[str] scope)
+ = trans(name, setScope(st, r, [], scope))[@location = t.id@location][@scope = scope];
+
 public Ref setScope(Scope st, Ref r: ref(str refName), list[str] name, list[str] scope)
  = ref(refName)[@location = r@location][@scope = scope][@ref = findLoc(st, scope, getName(r, name))];
 
 public Ref setScope(Scope st, Ref r: ref(str refName, Ref restName), list[str] name, list[str] scope)
  = ref(refName, setScope(st, restName, name+[refName], scope))[@location = r@location][@scope = scope][@ref = findLoc(st, scope, name+[refName])];
 
+public Expr setScope(Scope st, e:add(l, r), list[str] name, list[str] scope)
+  = add(setScope(st, l, name, scope), setScope(st, r, name, scope))[@location = e@location][@scope = scope];
+
+public Expr setScope(Scope st, e:gt(l, r), list[str] name, list[str] scope)
+  = gt(setScope(st, l, name, scope), setScope(st, r, name, scope))[@location = e@location][@scope = scope];
+  
+public Expr setScope(Scope st, e:var(r), list[str] name, list[str] scope)
+  = var(setScope(st, r, name, scope))[@location = e@location][@scope = scope];
+
+public Expr setScope(Scope st, e:lit(x), list[str] name, list[str] scope)
+  = e;
+  
 list[str] getName(Ref r: ref(str n), list[str] name)
 {
   return name + [n];

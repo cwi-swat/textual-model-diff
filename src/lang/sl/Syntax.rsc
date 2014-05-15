@@ -37,7 +37,9 @@ syntax Transition
     The lack of a Kleene star after ref implies it might have a 'single' feature,
     but this is not the case because Ref has no 'id'.
     Therefore ref must be an attribute value (...?...)*/
-  = trans: TID id "=\>" Ref ref;
+  = trans: TID id "=\>" Ref ref
+  | trans: TID id "=\>" Ref ref "when" Expr
+  ;
  
 syntax Ref /*No Polanen element is generated because it has no id, here we can use the AST value instead.*/
   = ref: NID
@@ -54,6 +56,14 @@ syntax NID
     
 syntax ID
   = name: NAME;
+
+syntax Expr
+  = lit: VALUE
+  | var: Ref
+  | left add: Expr "+" Expr
+  > non-assoc gt: Expr "\>" Expr;
+
+
 
 lexical VALUE
   = @category="Value" ([0-9]+([.][0-9]+?)?);  

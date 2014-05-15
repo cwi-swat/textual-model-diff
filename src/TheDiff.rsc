@@ -250,7 +250,7 @@ map[str, map[int, str]] METAMODEL = (
          if (node n := k) {
            kidId = addIt(n);
            println("set contains field [<i>] of <newId>  = <kidId>");
-           changes += [op_set(newId, "contains", kidId)];
+           changes += [op_insert(newId, "contains", kidId)];
          }
          else {
            throw "Error";
