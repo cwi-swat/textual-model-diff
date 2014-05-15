@@ -200,7 +200,7 @@ map[str, map[int, str]] METAMODEL = (
  
   loc getUseId(node n) = n@location;
  
-  bool isAtom(value x) = (str _ := x || bool _ := x || int _ := x)
+  bool isAtom(value x) = (str _ := x || bool _ := x || num _ := x)
     || (node n := x && (isId1(n@location) || isId2(n@location)));
   bool isList(value x) = (list[value] _ := x); 
   
@@ -261,7 +261,8 @@ map[str, map[int, str]] METAMODEL = (
      return newId;
   }
   
- void diffNodes(node n1, node n2) {
+ void diffNodes(loc id1, loc id2, node n1, node n2) {
+      // TODO: remove getDefId on n1/n2, is now id1, id2
       cs1 = getChildren(n1);
       cs2 = getChildren(n2);
       assert size(cs1) == size(cs2);
@@ -272,10 +273,10 @@ map[str, map[int, str]] METAMODEL = (
       
       
       int i = 0;
-      for (<node k1, node k2> <- zip(cs1, cs2)) {
-         if (isUse1(k1), isUse2(k2)) {
-           loc trg1 = getOneFrom(g1.refs[getUseId(k1)]);
-           loc trg2 = getOneFrom(g2.refs[getUseId(k2)]);
+      for (<value k1, value k2> <- zip(cs1, cs2)) {
+         if (node k1n := k1, node k2n := k2, isUse1(k1n), isUse2(k2n)) {
+           loc trg1 = getOneFrom(g1.refs[getUseId(k1n)]);
+           loc trg2 = getOneFrom(g2.refs[getUseId(k2n)]);
            if (trg1 in mapping.id && mapping.id[trg1] == trg2) {
               ; // nothing
            }
@@ -296,19 +297,19 @@ map[str, map[int, str]] METAMODEL = (
            }
            else {
              println("set primitive field [<i>] in <n2> to <k2>");
-             changes += [op_set(n2, "<i>", k2)];
+             changes += [op_set(id2, "<i>", k2, k1)];
            }
          }
-         else if (isUse1(k1), isContains1(k2)) {
+         else if (node k1n := k1, node k2n := k2, isUse1(k1n), isContains1(k2n)) {
            // always different
-           newId = addIt(k2);
+           newId = addIt(k2n);
            println("set to contains field [<i>] in <getDefId2(n2)> to <newId>");
            changes += [op_insert(getDefId2(n2), "contains", newId)];
          } 
-         else if (isContains1(k1), isUse2(k2)) {
-           deleteIt(k1);
-           println("set to reference field [<i>] in <getDefId2(n2)> to <getUseId(k2)>");
-           changes += [op_insert(getDefId2(n2), "reference", getUseId(k2))];
+         else if (node k1n := k1, node k2n := k2, isContains1(k1n), isUse2(k2n)) {
+           deleteIt(k1n);
+           println("set to reference field [<i>] in <getDefId2(n2)> to <getUseId(k2n)>");
+           changes += [op_insert(getDefId2(n2), "reference", getUseId(k2n))];
          } 
          //else if (isDef(k1), isContains(k2)) {
          //;
@@ -338,20 +339,19 @@ map[str, map[int, str]] METAMODEL = (
                }
             }
          } 
-         else if (isContains1(k1), isContains2(k2)) {
-            assert (node _ := k1) && (node _ := k2);
-            if (node a := k1, node b := k2) {
-              if (getName(a) == getName(b), size(getChildren(a)) == size(getChildren(b))) {
-                 diffNodes(a, b);
+         else if (node k1n := k1, node k2n := k2, isContains1(k1n), isContains2(k2n)) {
+              if (getName(k1n) == getName(k2n), size(getChildren(k1n)) == size(getChildren(k2n))) {
+                 diffNodes(k1n@location, k2n@location, k1n, k2n);
               }
               else {
-                deleteIt(a);
-                newId = addIt(b);
+                deleteIt(k1n);
+                newId = addIt(k2n);
                 println("set contains field [<i>] to <newId>");
               }
-            }
          } 
          else {
+           println("k1 = <k1>");
+           println("k2 = <k2>");
            throw "Error";
          }
          i += 1;
@@ -365,7 +365,7 @@ map[str, map[int, str]] METAMODEL = (
   for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
     other = mapping.id[l1];
     if (<_, node n2> <- r2[other]) {
-      diffNodes(n1, n2);
+      diffNodes(l1, other, n1, n2);
     }
   }
   
