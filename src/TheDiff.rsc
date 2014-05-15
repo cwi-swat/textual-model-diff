@@ -58,18 +58,10 @@ void matchIt(loc v1, loc v2) {
 
 alias IDDiff = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
 
-IDDiff merge(IDDiff x, IDDiff y)
-  = <x.added + y.added, x.deleted + y.deleted, x.id + y.id>;
+IDDiff merge(IDDiff x, IDDiff y) {
+  return <x.added + y.added, x.deleted + y.deleted,  x.id + y.id>;
+} 
 
-/**
- * Retrieves a list of tuples (lrel) of tokens and locations
- * given the name of a key, a type map and a type.
- * @param t AST (of variable type T)
- * @param id field to retrieve
- * @param ts type map
- * @parm typ type of the id
- * @return lref of tokens and relations
- */
 lrel[str, loc] flattenAST(&T t, str id, map[loc, str] ts, str typ) {
   l = [];
   visit (t) {
@@ -95,27 +87,9 @@ lrel[str, loc] flatten(Tree t) {
   return l;
 }
 
-<<<<<<< HEAD
-
-/**
- * Matches source locations of run-time elements from an old version to a new version of a textual model.
- * @param g1 Old definitions, uses and references (resulting from scope analysis).
- * @param g2 New definitions, uses and references (resulting from scope analysis).
- * @param ts1 Old type map (from token to type name).
- * @param ts2 New type map (from token to type name)
- * @return IDDiff, a tuple of added id locations, deleted id locations and matched id locations
- */
-IDDiff match
-(
-  NameGraph g1, NameGraph g2,
-  map[loc, str] ts1, map[loc, str] ts2,
-  lrel[str, loc] src1,  lrel[str, loc] src2
-) {
-=======
 tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   match(NameGraph g1, NameGraph g2, map[loc, str] ts1, map[loc, str] ts2, 
     lrel[str,loc] src1, lrel[str, loc] src2) {
->>>>>>> 358d666ec804fdd8511d64ffce21dfeb5e48f98e
  
   bool eq(tuple[str, loc] x, tuple[str, loc] y) = x[0] == y[0];
  
@@ -188,9 +162,6 @@ rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, st
   }
 
   return r;
-<<<<<<< HEAD
-} 
-=======
 }
 
 
@@ -380,7 +351,6 @@ void doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2
   }
 }
   
->>>>>>> 358d666ec804fdd8511d64ffce21dfeb5e48f98e
   
 data Diff[&T]
   = same(&T t1, &T t2)
@@ -454,5 +424,3 @@ map[int,map[int,int]] lcsMatrix(list[&T] x, list[&T] y, bool (&T,&T) equals) {
   
   return c;  
 }
-
-
