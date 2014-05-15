@@ -45,14 +45,19 @@ void matchIt(loc v1, loc v2) {
   r2 = getNameGraph(setScope(ast2));
   x = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "State"), flattenAST(ast2, "name", ts2, "State"));
   y = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Transition"), flattenAST(ast2, "name", ts2, "Transition"));
-  iprintln(merge(x, y));
+  z = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Group"), flattenAST(ast2, "name", ts2, "Group"));
+  iddiff = merge(merge(x, y), z);
+  println(iddiff);
+  iprintln(findNodes(ast1, r1, ts1));
+  iprintln(findNodes(ast2, r2, ts2));
+  //diffTree(ast1, ast2, ts1, ts2, r1, r2, iddiff); 
 }
 
 
 alias IDDiff = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
 
 IDDiff merge(IDDiff x, IDDiff y) {
-  return <x.added + y.added, x.deleted + x.deleted,  x.id + y.id>;
+  return <x.added + y.added, x.deleted + y.deleted,  x.id + y.id>;
 } 
 
 lrel[str, loc] flattenAST(&T t, str id, map[loc, str] ts, str typ) {
@@ -84,15 +89,6 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
     lrel[str,loc] src1, lrel[str, loc] src2) {
  
   bool eq(tuple[str, loc] x, tuple[str, loc] y) = x[0] == y[0];
- 
- 
-//  src1 = sort(src1, bool(tuple[str, loc] x, tuple[str, loc] y) {
-//     return x[0] < y[0];
-//  });
-//
-//  src2 = sort(src2, bool(tuple[str, loc] x, tuple[str, loc] y) {
-//     return x[0] < y[0];
-//  });
  
   m = lcsMatrix(src1, src2, eq);
   df = getDiff(m, src1, src2, size(src1), size(src2), eq);
@@ -140,7 +136,29 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   return <adds, dels, identify>;
 }
   
+anno loc node@location;
+   
+rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, str] ts) {
+  r = {};
   
+  bool isId(loc l) = l in g.defs + g.uses;
+  loc getId(node n) = head([ k@location | node k <- getChildren(n), isId(k@location)]);
+  bool hasId(node n) = any(node k <- getChildren(n), isId(k@location));
+  bool isDef(node n) = hasId(n) && getId(n) in g.defs;
+  bool isUse(node n) = n@location in g.uses;
+
+  node addIt(loc id, str typ, node t) {
+     r += {<id, typ, t>};
+     return t;
+  }
+
+  top-down visit (ast) {
+    case node n => addIt(getId(n), ts[getId(n)], n) when isDef(n)
+  }
+
+  return r;
+}
+
   
   
 data Diff[&T]
@@ -155,11 +173,11 @@ list[Diff[tuple[str,loc]]] detectMoves(list[Diff[tuple[str,loc]]] edits, map[loc
   // heuristic remove/add, add/remove pairs closest together.
   
   solve (edits) {
-    for ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, /*[*_, remove(<x, _>, _), *_] !:= xs2,*/
+    for ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, [*_, remove(<x, _>, _), *_] !:= xs2,
            l1 in ts1, l2 in ts2, ts1[l1] == ts2[l2]) {
        edits = [*xs1, *xs2, move(<x, l2>, <x, l1>, from, to), *xs3];
     }
-    for ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, /* [*_, add(<x, _>, _), *_] !:= xs2,*/
+    for ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, [*_, add(<x, _>, _), *_] !:= xs2,
            l1 in ts1, l2 in ts2, ts1[l1] == ts2[l2]) {
        edits = [*xs1, move(<x, l1>, <x, l2>, from, to), *xs2, *xs3];
     }

@@ -1,7 +1,7 @@
 machine m
 
   state init
-    barf => init
+    barf => bar
   end
   
   state bar
