@@ -32,9 +32,10 @@ void testSL(loc v1, loc v2) {
   iprintln(iddiff);
 
   meta = astModelMap(#lang::sl::AST::Machine);
-  Delta delta = doIt(ts1, ts2, r1, r2, iddiff, meta);
+  
+  ops = theDiff(ts1, ts2, r1, r2, iddiff, meta, <isId, getId>);
 
-  iprintln(delta);
+  iprintln(ops);
 }
 
 bool isId(node k) = name(_) := k;

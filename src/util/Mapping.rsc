@@ -5,6 +5,7 @@ import String;
 import Node;
 import List;
 import util::Math;
+import IO;
 
 alias IDClassMap = rel[loc id, str class, node tree];
 alias ASTModelMap = rel[str cons, str class, list[str] features];
@@ -49,9 +50,14 @@ ASTModelMap astModelMap(type[&T<:node] theAdt)
   return r;
 }
 
+// TODO!!! constructors cannot be shared among classes!!!
 
-str featureOf(node n, int i, ASTModelMap m) = fs[i]
-  when cons := getName(n), <cons, _, fs> <- m, i < size(fs); 
+
+list[str] featuresOf(node n, int arity, ASTModelMap m) = fs 
+  when cons := getName(n), <cons, _, fs> <- m, size(fs) == arity;
+
+str featureOf(node n, int i, int arity, ASTModelMap m) = 
+  featuresOf(n, arity, m)[i];
 
 str classOf(node n, ASTModelMap m) = class
   when cons := getName(n), <cons, class, _> <- m; 
