@@ -49,23 +49,43 @@ list[Operation] deleteIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess
     }
     i += 1;
   }
+  // then delete container
   ops += [op_del(myId, path, classOf(n, meta))];
   return ops;
 }
 
 list[Operation] addIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+  ops = [op_new(myId, path, classOf(n, meta))];
+  return ops;
+}
+
+
+list[Operation] addInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+  ops =  addIt(myId, path, n, meta, ia); //[op_new(myId, path, classOf(n, meta))];
+  ops += initIt(myId, path, n, meta, ia);
+  return ops;
+}
+  
+list[Operation] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
   ops = [];
   ks = getChildren(n);
   i = 0;
-  // first add container
-  ops += [op_new(myId, path, classOf(n, meta))];
   for (value k <- ks) {
-    if (node kn := k, isContains(kn, ia)) {
-      // first add kids
-      println("kn = <kn>");
-      println("ks = <ks>");
-      iprintln(meta);
-      ops += addIt(myId, path + [featureOf(n, i, size(ks), meta)], kn, meta, ia);
+    f = featureOf(n, i, size(ks), meta);
+    if (isAtom(k, ia)) {
+      ops += [op_set(myId, path + [f], k, null())];
+    }
+    else if (node kn := k, isContains(kn, ia)) {
+      ops += addInline(myId, path + [f], kn, meta, ia);
+    }
+    else if (node kn := k, isDef(kn, ia)) {
+      ops += [op_insert(myId, path + [f], getDefId(kn, ia))];
+    }
+    else if (node kn := k, ia.isId(kn)) {
+      ops += [op_insert(myId, path + [f], ia.getId(kn))];
+    }
+    else if (isList(k)) {
+      ;
     }
     i += 1;
   }
@@ -83,6 +103,11 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
     cs1 = getChildren(n1);
     cs2 = getChildren(n2);
       
+    /*
+     * We can simplify here by assuming
+     * - n1.name == n2.name => classOf(n1) == classOf(n2)
+     * - n1.name == n2.name => arity(n1) == arity(n2)
+     */
       
     fs1 = featuresOf(n1, size(cs1), meta);
     fs2 = featuresOf(n2, size(cs2), meta);
@@ -110,7 +135,7 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       
       else if (node k1n := k1, node k2n := k2, ia.isId(k1n), isContains(k2n, ia)) {
         changes += [op_remove(id1, path + [f1], ia.getId(k1n))];
-        changes += addIt(id1, path + [f1], k2n, meta, ia);
+        changes += addInline(id1, path + [f1], k2n, meta, ia);
       } 
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, ia), ia.isId(k2n)) {
@@ -172,13 +197,16 @@ list[Operation] theDiff(IDClassMap r1,
                         IdAccess ia) {
   ops = [];
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
-    ops += addIt(l2, [], n2, meta, ia);  
+    ops += addIt(l2, [], n2, meta, ia);
   }
-  
+  for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
+    ops += initIt(l2, [], n2, meta, ia);
+  }
+
   for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
     l2 = mapping.id[l1];
     if (<_, node n2> <- r2[l2]) {
-      ops += diffNodes(l1, l2, [], n1, n2, g1, g2,meta, ia);
+      ops += diffNodes(l1, l2, [], n1, n2, g1, g2, meta, ia);
     }
   }
   
