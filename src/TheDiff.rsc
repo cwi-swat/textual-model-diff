@@ -18,73 +18,13 @@ import ParseTree;
 import Set;
 
 import lang::Delta::AST;
-  
-void matchItDerric(loc v1, loc v2) {
-  src1 = readFile(v1);
-  src2 = readFile(v2);
-  pt1 = parseDerric(v1);
-  pt2 = parseDerric(v2);
-  ast1 = build(pt1);
-  ast2 = build(pt2);
-  ts1 = typeMap(ast1);
-  ts2 = typeMap(ast2);
-  r1 = resolveNames(ast1); 
-  r2 = resolveNames(ast2);
-  x = match(r1, r2, ts1, ts2, flatten(pt1), flatten(pt2));
-  iprintln(x);
-}
 
-  
-
-alias IDDiff = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
-
-IDDiff merge(IDDiff x, IDDiff y) {
-  return <x.added + y.added, x.deleted + y.deleted,  x.id + y.id>;
-} 
-
-// Assume: src1 and src2 are token seqs of the single same type (e.g. State).
-IDDiff match(lrel[str,loc] src1, lrel[str, loc] src2) {
- 
-  bool eq(tuple[str, loc] x, tuple[str, loc] y) = x[0] == y[0];
- 
-  m = lcsMatrix(src1, src2, eq);
-  df = getDiff(m, src1, src2, size(src1), size(src2), eq);
-  
-  println("The DIFF:");
-  iprintln(df);
-
-  df = detectMoves(df);
-  iprintln(df);
-
-  map[loc, loc] identify = ();
-  set[loc] adds = {};
-  set[loc] dels = {};
-  
-  for (e <- df) {
-    switch (e) {
-      case same(<x, l1>, <y, l2>): 
-          identify += ( l1: l2 );
-        
-      case move(<_, l1>, <_, l2>, _, _): 
-          identify += ( l1: l2 );
-        
-      case add(<y, l2>, int p): 
-        adds += { l2 };
-
-      case remove(<x, l1>, int p):
-        dels += { l1 };
-    }
-  
-  } 
-  return <adds, dels, identify>;
-}
   
 anno loc node@location;
 
 
    
-/*void*/ Delta doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
-    NameGraph g1, NameGraph g2, IDDiff mapping) {
+/*void*/ Delta doIt(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta) {
  
   list[Operation] additions = [];
   list[Operation] changes = [];
@@ -125,7 +65,7 @@ anno loc node@location;
       }
     }
     println("delete <getName(n)> with id <myId>");
-    deletions += [op_del(myId, getName(n))];
+    deletions += [op_del(myId, classOf(n, meta))];
   }
   
   loc new(node n) {
@@ -138,14 +78,14 @@ anno loc node@location;
   loc addIt(node n) = addIt(new(n), n);
   
   loc addIt(loc newId, node n) {
-     println("ADD <newId> = new <getName(n)>");
-     additions += [op_new(newId, getName(n))];
-     i = 0;
-     for (node k <- getChildren(n)) {
-       if (isUse2(k)) {
-         if (target <- g2.refs[getUseId(k)], original <- mapping.id, mapping.id[original] == target) {
+     println("ADD <newId> = new <classOf(n, meta)>");
+     additions += [op_new(newId, classOf(n, meta))];
+     int i = 0;
+     for (value k <- getChildren(n)) {
+       if (node kn := k, isUse2(kn)) {
+         if (target <- g2.refs[getUseId(kn)], original <- mapping.id, mapping.id[original] == target) {
            println("set to original reference [<i>] of <newId> = <original>");           
-           changes += [op_insert(newId, "<i>", original) ];
+           changes += [op_insert(newId, featureOf(n, i, meta), original) ];
          }
          else {
            //FIXME:
@@ -154,19 +94,22 @@ anno loc node@location;
            ;
          }
        }
-       else if (isDef2(k)) {
-         println("set ref field [<i>] of <newId> = <getDefId2(k)>");
-         changes += [op_insert(newId, "<i>", getDefId2(k))];
+       else if (node kn := k, isDef2(kn)) {
+         println("set ref field [<i>] of <newId> = <getDefId2(kn)>");
+         changes += [op_insert(newId, featureOf(n, i, meta), getDefId2(kn))];
        }
        else if (isAtom(k)) {
          println("set prim field [<i>] of <newId>  = <k>");
-         changes += [op_set(newId, "<i>", k, 0)];
+         changes += [op_set(newId, featureOf(n, i, meta), k, 0)];
        }
        else if (isContains2(k)) {
-         if (node n := k) {
-           kidId = addIt(n);
+         if (node kn := k) {
+           kidId = addIt(kn);
            println("set contains field [<i>] of <newId>  = <kidId>");
-           changes += [op_insert(newId, "contains", kidId)];
+           iprintln(meta);
+           println(n);
+           println(kn);
+           changes += [op_insert(newId, featureOf(n, i, meta), kidId)];
          }
          else {
            throw "Error";
@@ -177,7 +120,7 @@ anno loc node@location;
      return newId;
   }
   
-  void diffContainsNodes(loc id1, loc id2, list[int] path, node n1, node n2) {
+  void diffContainsNodes(loc id1, loc id2, Path path, node n1, node n2) {
     cs1 = getChildren(n1);
     cs2 = getChildren(n2);
     i = 0;
@@ -189,7 +132,7 @@ anno loc node@location;
               ; // nothing
            }
            else {
-             changes += [op_insert(id1, path + [i], trg2)]; 
+             changes += [op_insert(id1, path + [featureOf(n1, i, meta)], trg2)]; 
            }
          } 
          else if (isAtom(k1), isAtom(k2)) {
@@ -197,7 +140,7 @@ anno loc node@location;
              ; // nothing
            }
            else {
-             changes += [op_set(id2, path + [i], k2, k1)];
+             changes += [op_set(id2, path + [featureOf(n1, i, meta)], k2, k1)];
            }
          }
          else if (node k1n := k1, node k2n := k2, isUse1(k1n), isContains1(k2n)) {
@@ -205,14 +148,14 @@ anno loc node@location;
            newId = addIt(k2n);
            // TODO: make creation inline here, just like deletes.
            // Is ok because no aliasing.
-           changes += [op_insert(id2, path + [i], newId)];
+           changes += [op_insert(id2, path + [featureOf(n1, i, meta)], newId)];
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isUse2(k2n)) {
            // TODO: add delete to changes here 
            // so that we can use paths.
            deleteIt(k1n);
            //changes += [op_remove(id2, path + [i], getUseId(k2n))];
-           changes += [op_insert(id2, path + [i], getUseId(k2n))];
+           changes += [op_insert(id2, path + [featureOf(n1, i, meta)], getUseId(k2n))];
          } 
          else if (isList(k1), isList(k2)) {
             bool eqWithRefs(node a, node b) {
@@ -236,8 +179,10 @@ anno loc node@location;
             }
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isContains2(k2n)) {
-              if (getName(k1n) == getName(k2n), size(getChildren(k1n)) == size(getChildren(k2n))) {
-                 diffContainsNodes(id1, id2, path + [i], k1n, k2n);
+              // NOTE: for now we require size of children to be the same
+              // should match arguments based on names. 
+              if (classOf(k1n, meta) == classOf(k2n, meta), size(getChildren(k1n)) == size(getChildren(k2n))) {
+                 diffContainsNodes(id1, id2, path + [featureOf(n1, i, meta)], k1n, k2n);
               }
               else {
                 deleteIt(k1n);
@@ -274,7 +219,7 @@ anno loc node@location;
            }
            else {
              println("set field [<i>] in <getDefId2(n2)> to <trg2>");
-             changes += [op_insert(getDefId2(n2), "<i>", trg2)]; 
+             changes += [op_insert(getDefId2(n2), featureOf(n1, i, meta), trg2)]; 
            }
          } 
          //else if (isUse(k1), isDef(k2)) {
@@ -289,19 +234,19 @@ anno loc node@location;
            }
            else {
              println("set primitive field [<i>] in <n2> to <k2>");
-             changes += [op_set(id2, "<i>", k2, k1)];
+             changes += [op_set(id2, featureOf(n1, i, meta), k2, k1)];
            }
          }
          else if (node k1n := k1, node k2n := k2, isUse1(k1n), isContains1(k2n)) {
            // always different
            newId = addIt(k2n);
            println("set to contains field [<i>] in <getDefId2(n2)> to <newId>");
-           changes += [op_insert(getDefId2(n2), "contains", newId)];
+           changes += [op_insert(getDefId2(n2), featureOf(n1, i, meta), newId)];
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isUse2(k2n)) {
            deleteIt(k1n);
            println("set to reference field [<i>] in <getDefId2(n2)> to <getUseId(k2n)>");
-           changes += [op_insert(getDefId2(n2), "reference", getUseId(k2n))];
+           changes += [op_insert(getDefId2(n2), featureOf(n1, i, meta), getUseId(k2n))];
          } 
          //else if (isDef(k1), isContains(k2)) {
          //;
@@ -332,13 +277,14 @@ anno loc node@location;
             }
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isContains2(k2n)) {
-              if (getName(k1n) == getName(k2n), size(getChildren(k1n)) == size(getChildren(k2n))) {
-                 diffContainsNodes(id1, id2, [i], k1n, k2n);
+              if (classOf(k1n, meta) == classOf(k2n, meta), size(getChildren(k1n)) == size(getChildren(k2n))) {
+                 diffContainsNodes(id1, id2, [featureOf(n1, i, meta)], k1n, k2n);
               }
               else {
                 deleteIt(k1n);
                 newId = addIt(k2n);
                 println("set contains field [<i>] to <newId>");
+                // TODO!!!
               }
          } 
          else {
@@ -351,6 +297,9 @@ anno loc node@location;
    }
  
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
+    println("Adds----------");
+    println("L2 = <l2>");
+    println(mapping.id<1>);
     addIt(l2, n2);  
   }
   
@@ -370,73 +319,3 @@ anno loc node@location;
 }
   
   
-data Diff[&T]
-  = same(&T t1, &T t2)
-  | same(&T t)
-  | add(&T t, int pos)
-  | remove(&T t, int pos)
-  | move(&T t1, &T t2, int from, int to)
-  ;
-  
-list[Diff[tuple[str,loc]]] detectMoves(list[Diff[tuple[str,loc]]] edits) {
-  // heuristic remove/add, add/remove pairs closest together.
-  
-  solve (edits) {
-    for ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, [*_, remove(<x, _>, _), *_] !:= xs2) {
-       edits = [*xs1, *xs2, move(<x, l2>, <x, l1>, from, to), *xs3];
-    }
-    for ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, [*_, add(<x, _>, _), *_] !:= xs2) {
-       edits = [*xs1, move(<x, l1>, <x, l2>, from, to), *xs2, *xs3];
-    }
-  }
-  
-  return edits;  
-}
-
-list[Diff[&T]] getDiff(map[int,map[int,int]] c, list[&T] x, list[&T] y, int i, int j,
-   bool(&T, &T) equals) {
-  if (i > 0, j > 0,  equals(x[i-1], y[j-1])) {
-    //println("============= Returning same(<i-1>, <j-1>)");
-    //println(x[i-1]);
-    //println(y[j-1]);
-    return getDiff(c, x, y, i - 1, j - 1, equals) + [same(x[i-1], y[j-1])];
-  }
-  if (j > 0, (i == 0 || c[i][j-1] >= c[i-1][j])) {
-    //println("+++++++++++++ Returning add(<j-1>)");
-    //println(y[j-1]);
-    return getDiff(c, x, y, i, j-1, equals) + [add(y[j-1], j-1)];
-  }
-  if (i > 0, (j == 0 || c[i][j-1] < c[i-1][j])) {
-    //println("------------- Returning remove(<i-1>)");
-    //println(x[i-1]);
-    return getDiff(c, x, y, i-1, j, equals) + [remove(x[i-1], i-1)];
-  }
-  return [];
-}
-
-map[int,map[int,int]] lcsMatrix(list[&T] x, list[&T] y, bool (&T,&T) equals) {
-  map[int,map[int,int]] c = ();
-  
-  m = size(x);
-  n = size(y);
-  
-  for (int i <- [0..m + 1]) {
-    c[i] = ();
-    c[i][0] = 0;
-  }
-  
-  for (int j <- [0..n + 1]) {
-    c[0][j] = 0;
-  }
-  
-  for (int i <- [1..m + 1], int j <- [1.. n + 1]) {
-    if (equals(x[i - 1], y[j - 1])) {
-      c[i][j] = c[i-1][j-1] + 1;
-    }
-    else {
-      c[i][j] = max(c[i][j-1], c[i-1][j]);
-    }
-  }
-  
-  return c;  
-}

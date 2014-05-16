@@ -31,7 +31,8 @@ void testSL(loc v1, loc v2) {
   iddiff = ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 ); 
   iprintln(iddiff);
 
-  Delta delta = doIt(ts1, ts1, r1, r2, iddiff);
+  meta = astModelMap(#lang::sl::AST::Machine);
+  Delta delta = doIt(ts1, ts2, r1, r2, iddiff, meta);
 
   iprintln(delta);
 }
