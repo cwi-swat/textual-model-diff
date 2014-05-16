@@ -243,6 +243,15 @@ list[Operation] theDiff(IDClassMap r1,
 }
 
 
+list[Diff[value]] listDiff(list[value] xs, list[value] ys, 
+    NameGraph g1, NameGraph g2, IDMatching mapping, IdAcces ia) {
+
+  bool eq(value x, value y) = modelEquals(x, y, g1, g2, mapping, ia);
+ 
+  mx = lcsMatrix(xs, ys, eq);
+  return getDiff(mx, xs, ys, size(xs), size(ys), eq);
+}
+
 bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IdAcces ia) {
   if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia)) {
   ;
@@ -272,16 +281,12 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
     }
     return true;
   }
-  else if (isList(x), isList(y)) {
-    if (list[value] xl := x, list[value] yl := yl) {
-      return listDiff(x, y) == [];
-    }
-    assert false: "cannot happen";
+  else if (list[value] xl := x, list[value] yl := y) {
+    return listDiff(x, y) == [];
   }
   else if (isAtom(x), isAtom(y)) {
     return x == y;
   }
-  
   return false;
 }
 
