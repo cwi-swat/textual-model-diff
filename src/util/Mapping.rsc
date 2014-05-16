@@ -4,6 +4,7 @@ import Type;
 import String;
 import Node;
 import List;
+import util::Math;
 
 alias IDClassMap = rel[loc id, str class, node tree];
 alias ASTModelMap = rel[str cons, str class, list[str] features];
