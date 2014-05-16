@@ -11,6 +11,7 @@ import lang::sl::NameAnalyzer;
 import lang::derric::NameRel;
 import lang::derric::BuildFileFormat;
 import util::NameGraph;
+import util::Mapping;
 
 import Node;
 import ParseTree;
@@ -41,44 +42,18 @@ IDDiff merge(IDDiff x, IDDiff y) {
   return <x.added + y.added, x.deleted + y.deleted,  x.id + y.id>;
 } 
 
-lrel[str, loc] flattenAST(&T t, str id, map[loc, str] ts, str typ) {
-  l = [];
-  visit (t) {
-    case n:str x(str name): {
-       if (x == id && n@location in ts, ts[n@location] == typ) {
-         l += [<name, n@location>];
-       }
-    }
-  }
-  return l;
-}
-  
-  
-  
-lrel[str, loc] flatten(Tree t) {
-  l = [];
-  
-  top-down-break visit (t) {
-    case x:appl(prod(lex(_), _, _), _): l += [<"<x>", x@\loc>];
-    case x:appl(prod(label(_, lex(_)), _, _), _): l += [<"<x>", x@\loc>];
-    case x:appl(prod(layouts(_), _, _), _): ;
-  }
-  return l;
-}
-
-tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
-  match(NameGraph g1, NameGraph g2, map[loc, str] ts1, map[loc, str] ts2, 
-    lrel[str,loc] src1, lrel[str, loc] src2) {
+// Assume: src1 and src2 are token seqs of the single same type (e.g. State).
+IDDiff match(lrel[str,loc] src1, lrel[str, loc] src2) {
  
   bool eq(tuple[str, loc] x, tuple[str, loc] y) = x[0] == y[0];
  
   m = lcsMatrix(src1, src2, eq);
   df = getDiff(m, src1, src2, size(src1), size(src2), eq);
   
-  //println("The DIFF:");
-  //iprintln(df);
+  println("The DIFF:");
+  iprintln(df);
 
-  df = detectMoves(df, ts1, ts2);
+  df = detectMoves(df);
   iprintln(df);
 
   map[loc, loc] identify = ();
@@ -88,30 +63,16 @@ tuple[set[loc] added, set[loc] deleted, map[loc, loc] id]
   for (e <- df) {
     switch (e) {
       case same(<x, l1>, <y, l2>): 
-        if (ts1[l1]?, ts2[l2]?, ts1[l1] == ts2[l2]) {
-          identify += ( l1: l2 | l1 in g1.defs, l2 in g2.defs );
-        }
-        else {
-          dels += { l1 | l1 in g1.defs };
-          adds += { l2 | l2 in g2.defs };
-        }
+          identify += ( l1: l2 );
         
       case move(<_, l1>, <_, l2>, _, _): 
-        if (ts1[l1]?, ts2[l2]?, ts1[l1] == ts2[l2]) {
-          identify += ( l1: l2 | l1 in g1.defs, l2 in g2.defs );
-        }
-        else {
-          dels += { l1 | l1 in g1.defs };
-          adds += { l2 | l2 in g2.defs };
-        }
+          identify += ( l1: l2 );
         
-      case add(<y, l2>, int p): {
-        println("<l2> is added, in g2.defs? <l2 in g2.defs>");
-        adds += { l2 | l2 in g2.defs };
-      }     
-      case remove(<x, l1>, int p): {
-        dels += { l1 | l1 in g1.defs };
-      }
+      case add(<y, l2>, int p): 
+        adds += { l2 };
+
+      case remove(<x, l1>, int p):
+        dels += { l1 };
     }
   
   } 
@@ -122,29 +83,6 @@ anno loc node@location;
 
 
    
-rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, str] ts) {
-  r = {};
-  
-  bool isId(loc l) = l in g.defs + g.uses;
-  loc getId(node n) = head([ k@location | node k <- getChildren(n), isId(k@location)]);
-  bool hasId(node n) = any(node k <- getChildren(n), isId(k@location));
-  bool isDef(node n) = hasId(n) && getId(n) in g.defs;
-  bool isUse(node n) = n@location in g.uses;
-
-  node addIt(loc id, str typ, node t) {
-     r += {<id, typ, t>};
-     return t;
-  }
-
-  top-down visit (ast) {
-    case node n: if (isDef(n))  addIt(getId(n), ts[getId(n)], n);
-  }
-
-  return r;
-}
-
-
-
 /*void*/ Delta doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
     NameGraph g1, NameGraph g2, IDDiff mapping) {
  
@@ -440,16 +378,14 @@ data Diff[&T]
   | move(&T t1, &T t2, int from, int to)
   ;
   
-list[Diff[tuple[str,loc]]] detectMoves(list[Diff[tuple[str,loc]]] edits, map[loc, str] ts1, map[loc, str] ts2) {
+list[Diff[tuple[str,loc]]] detectMoves(list[Diff[tuple[str,loc]]] edits) {
   // heuristic remove/add, add/remove pairs closest together.
   
   solve (edits) {
-    for ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, [*_, remove(<x, _>, _), *_] !:= xs2,
-           l1 in ts1, l2 in ts2, ts1[l1] == ts2[l2]) {
+    for ([*xs1, add(<str x, l1>, to), *xs2, remove(<x, l2>, from), *xs3] := edits, [*_, remove(<x, _>, _), *_] !:= xs2) {
        edits = [*xs1, *xs2, move(<x, l2>, <x, l1>, from, to), *xs3];
     }
-    for ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, [*_, add(<x, _>, _), *_] !:= xs2,
-           l1 in ts1, l2 in ts2, ts1[l1] == ts2[l2]) {
+    for ([*xs1, remove(<str x, l1>, from), *xs2, add(<x, l2>, to), *xs3] := edits, [*_, add(<x, _>, _), *_] !:= xs2) {
        edits = [*xs1, move(<x, l1>, <x, l2>, from, to), *xs2, *xs3];
     }
   }

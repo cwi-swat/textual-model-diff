@@ -5,12 +5,12 @@ import String;
 import Node;
 
 
-alias IDClassMap = map[loc id, str class];
+alias IDClassMap = rel[loc id, str class, node tree];
 
 // Assume: only one id per list of arguments in a node.
 IDClassMap idClassMap(&T<:node ast, bool(node) isId, loc(node) getId) 
-  = ( getId(k): capitalize(getName(n)) | /node n := ast, 
-       node k <- getChildren(n), isId(k) ); 
+  = { <getId(k), capitalize(getName(n)), n> | /node n := ast, 
+       node k <- getChildren(n), isId(k) }; 
 
 
 alias ASTModelMap = rel[str cons, str class, list[str] features];
@@ -37,10 +37,11 @@ map[str class, lrel[str, loc] defs] projectEntities(&T<:node t, IDClassMap cm, b
   
   visit (t) {
     case node n: 
-      if (isId(n)) {
-        m[cm[getId(n)]]?EMPTY += [<getName(n), getId(n)>];
+      if (isId(n), x := getId(n), <x, class, _> <- cm) {
+        m[class]?EMPTY += [<getName(n), getId(n)>];
       }
   }
 
   return m;
-}        
+}       
+

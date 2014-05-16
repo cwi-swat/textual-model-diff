@@ -26,12 +26,12 @@ void testSL(loc v1, loc v2) {
   pr1 = projectEntities(ast1, ts1, isId, getId);
   pr2 = projectEntities(ast2, ts2, isId, getId);
   
-  iddiff = ( <{}, {}, ()> | merge(it, match(r1, r2, ts1, ts2, pr1[k], pr2[k])) | k <- pr1, k in pr2 ); 
+  // TODO: the case that either pr1 or pr2 doesn't have any "Xs"
+  // --> make domains of pr1 and pr2 uniform.
+  iddiff = ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 ); 
   iprintln(iddiff);
 
-  ns1 = findNodes(ast1, r1, ts1);
-  ns2 = findNodes(ast2, r2, ts2);
-  Delta delta = doIt(ns1, ns2, r1, r2, iddiff);
+  Delta delta = doIt(ts1, ts1, r1, r2, iddiff);
 
   iprintln(delta);
 }
