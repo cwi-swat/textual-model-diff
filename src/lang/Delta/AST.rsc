@@ -14,6 +14,7 @@ data Operation
   | op_insert    (loc owner, str name, loc id2)
   | op_insert    (loc owner, list[int] path, loc id2)
   | op_remove    (loc owner, str name, loc id2)
+  | op_remove    (loc owner, list[int] path, loc id2)
   | op_insertAt  (loc owner, str name, loc id2, int index)
   | op_insertAt  (loc owner, list[int] path, loc id2, int index)
   | op_removeAt  (loc owner, str name, loc id2, int index)

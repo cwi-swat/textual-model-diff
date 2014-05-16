@@ -34,31 +34,6 @@ void matchItDerric(loc v1, loc v2) {
 }
 
   
-void matchIt(loc v1, loc v2) {
-  str src1 = readFile(v1);
-  str src2 = readFile(v2);
-  Tree pt1 = sl_parse(v1);
-  Tree pt2 = sl_parse(v2);
-  Machine ast1 = sl_implode(pt1);
-  Machine ast2 = sl_implode(pt2);
-  ts1 = typeMap(ast1);
-  ts2 = typeMap(ast2);
-  r1 = getNameGraph(setScope(ast1)); 
-  r2 = getNameGraph(setScope(ast2));
-  x = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "State"), flattenAST(ast2, "name", ts2, "State"));
-  y = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Transition"), flattenAST(ast2, "name", ts2, "Transition"));
-  z = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Group"), flattenAST(ast2, "name", ts2, "Group"));
-  z0 = match(r1, r2, ts1, ts2, flattenAST(ast1, "name", ts1, "Machine"), flattenAST(ast2, "name", ts2, "Machine"));
-  iddiff = merge(merge(merge(x, y), z), z0);
-  iprintln(iddiff);
-
-  ns1 = findNodes(ast1, r1, ts1);
-  ns2 = findNodes(ast2, r2, ts2);
-  Delta delta = doIt(ns1, ns2, r1, r2, iddiff);
-
-  iprintln(delta);
-}
-
 
 alias IDDiff = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
 
@@ -168,12 +143,6 @@ rel[loc id, str typ, node tree] findNodes(&T<:node ast, NameGraph g, map[loc, st
   return r;
 }
 
-
-map[str, map[int, str]] METAMODEL = (
-  "group": (0: "name", 1: "states"),
-  "State": (0: "name", 1: "transitions"),
-  "Transition": (0: "event", 1: "target")
-);
 
 
 /*void*/ Delta doIt(rel[loc id, str typ, node tree] r1, rel[loc id, str typ, node tree] r2,
@@ -296,10 +265,15 @@ map[str, map[int, str]] METAMODEL = (
          else if (node k1n := k1, node k2n := k2, isUse1(k1n), isContains1(k2n)) {
            // always different
            newId = addIt(k2n);
+           // TODO: make creation inline here, just like deletes.
+           // Is ok because no aliasing.
            changes += [op_insert(id2, path + [i], newId)];
          } 
          else if (node k1n := k1, node k2n := k2, isContains1(k1n), isUse2(k2n)) {
+           // TODO: add delete to changes here 
+           // so that we can use paths.
            deleteIt(k1n);
+           //changes += [op_remove(id2, path + [i], getUseId(k2n))];
            changes += [op_insert(id2, path + [i], getUseId(k2n))];
          } 
          else if (isList(k1), isList(k2)) {

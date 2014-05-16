@@ -178,13 +178,3 @@ public NameGraph getNameGraph(Machine m)
   return <defs,uses,refs>;
 }
 
-map[loc, str] typeMap(Machine m) {
-  ts = ();
-  visit (m) {
-    case Machine x: ts[x.id@location] = "Machine";
-    case x:state(_, _): ts[x.id@location] = "State";
-    case x:group(_, _): ts[x.id@location] = "Group";
-    case Transition x: ts[x.id@location] = "Transition";
-  }
-  return ts;
-}
