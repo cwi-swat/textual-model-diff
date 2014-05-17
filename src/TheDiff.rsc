@@ -114,7 +114,7 @@ list[Operation] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess i
 }
 
 list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
-       NameGraph g1, NameGraph g2, ASTModelMap meta, IdAccess ia) {
+       NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta, IdAccess ia) {
        
     assert classOf(n1, meta) == classOf(n2, meta);
 
@@ -189,13 +189,46 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
         }
       }
       
-      else if (isList(k1), isList(k2)) {
-        ;
+      else if (list[value] k1l := k1, list[value] k2l := k2) {
+         edits = listDiff(k1l, k2l, g1, g2, mapping, ia);
+         for (e <- edits) {
+           switch (e) {
+             case remove(value a, int pos): {
+               if (node an := a, isDef(an, ia)) {
+                 changes += [op_removeAt(id1, path + [f1], getDefId(an, ia), pos)];
+               }
+               else if (node an := a, ia.isId(an)) {
+                 changes += [op_removeAt(id1, path + [f1], ia.getId(an), pos)];
+               }
+               else if (node an := a, isContains(an, ia)) {
+                 ; // TODO: what do we do here?
+               }
+               else {
+                 assert false: "unsupported list element";
+               }
+             }
+             case add(value a, int pos): {
+               if (node an := a, isDef(an, ia)) {
+                 changes += [op_insertAt(id1, path + [f1], getDefId(an, ia), pos)];
+               }
+               else if (node an := a, ia.isId(an)) {
+                 changes += [op_insertAt(id1, path + [f1], ia.getId(an), pos)];
+               }
+               else if (node an := a, isContains(an, ia)) {
+                 // TODO: should be addInlineAt...
+                 changes += addInline(id1, path + [f], an, meta, ia);
+               }
+               else {
+                 assert false: "unsupported list element";
+               }
+             }
+           }
+         }
       } 
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, ia), isContains(k2n, ia)) {
         if (classOf(k1n, meta) == classOf(k2n, meta)) {
-          changes += diffNodes(id1, id2, path + [f1], k1n, k2n, g1, g2, meta, ia);
+          changes += diffNodes(id1, id2, path + [f1], k1n, k2n, g1, g2, mapping, meta, ia);
         }
         else {
           //changes += deleteIt(id1, path + [f1], k1n, meta, ia);
@@ -231,7 +264,7 @@ list[Operation] theDiff(IDClassMap r1,
   for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
     l2 = mapping.id[l1];
     if (<_, node n2> <- r2[l2]) {
-      ops += diffNodes(l1, l2, [], n1, n2, g1, g2, meta, ia);
+      ops += diffNodes(l1, l2, [], n1, n2, g1, g2, mapping, meta, ia);
     }
   }
   
@@ -244,7 +277,7 @@ list[Operation] theDiff(IDClassMap r1,
 
 
 list[Diff[value]] listDiff(list[value] xs, list[value] ys, 
-    NameGraph g1, NameGraph g2, IDMatching mapping, IdAcces ia) {
+    NameGraph g1, NameGraph g2, IDMatching mapping, IdAccess ia) {
 
   bool eq(value x, value y) = modelEquals(x, y, g1, g2, mapping, ia);
  
@@ -252,12 +285,17 @@ list[Diff[value]] listDiff(list[value] xs, list[value] ys,
   return getDiff(mx, xs, ys, size(xs), size(ys), eq);
 }
 
-bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IdAcces ia) {
+bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IdAccess ia) {
   if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia)) {
-  ;
+    return mapping.id[getDefId(xn, ia)] == getDefId(yn, ia);
   }
   else if (node xn := x, node yn := y, ia.isId(xn), ia.isId(yn)) {
-  ;
+    if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
+      return mapping.id[d1] == d2;
+    }
+    else {
+      throw "BUGS: Could not find uses in ref graph.";
+    }
   }
   else if (node xn := x, node yn := y, ia.isId(xn), isDef(yn, ia)) {
   ;
