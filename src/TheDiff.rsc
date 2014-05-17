@@ -293,15 +293,19 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
     if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
       return mapping.id[d1] == d2;
     }
-    else {
-      throw "BUGS: Could not find uses in ref graph.";
-    }
+    assert false: "BUG: Could not find uses in ref graph.";
   }
   else if (node xn := x, node yn := y, ia.isId(xn), isDef(yn, ia)) {
-  ;
+    if (d1 <- g1.refs[ia.getId(xn)]) {
+      return mapping.id[d1] == getDefId(yn, ia);
+    }
+    assert false: "BUG: Could not find use in ref graph.";
   }
   else if (node xn := x, node yn := y, isDef(xn, ia), ia.isId(yn)) {
-  ;
+    if (d2 <- g2.refs[ia.getId(yn)]) {
+      return mapping[getDefId(xn, ia)] == d2;
+    }
+    assert false: "BUG: Could not find uses in ref graph.";
   }
   else if (node xn := x, node yn := y, isContains(xn, ia), ia.isContains(yn)) {
     xks = getChildren(xn);
