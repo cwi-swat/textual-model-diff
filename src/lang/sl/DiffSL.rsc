@@ -23,17 +23,12 @@ void testSL(loc v1, loc v2) {
   ts2 = slIdClassMap(ast2);
   r1 = getNameGraph(setScope(ast1)); 
   r2 = getNameGraph(setScope(ast2));
-  pr1 = projectEntities(ast1, ts1, isId, getId);
-  pr2 = projectEntities(ast2, ts2, isId, getId);
-  
-  // TODO: the case that either pr1 or pr2 doesn't have any "Xs"
-  // --> make domains of pr1 and pr2 uniform.
-  iddiff = ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 ); 
-  iprintln(iddiff);
+
+  matching = identifyEntities(ast1, ast2, ts1, ts2, <isId, getId>);
 
   meta = astModelMap(#lang::sl::AST::Machine);
   
-  ops = theDiff(ts1, ts2, r1, r2, iddiff, meta, <isId, getId>);
+  ops = theDiff(ts1, ts2, r1, r2, matching, meta, <isId, getId>);
 
   iprintln(ops);
 }

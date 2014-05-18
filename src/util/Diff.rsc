@@ -1,22 +1,11 @@
 module util::Diff
 
-import String;
 import List;
-import util::Math;
-import IO;
-import lang::sl::IDE;
-import lang::sl::Syntax;
-import lang::sl::AST;
-import lang::sl::NameAnalyzer;
-import lang::derric::NameRel;
-import lang::derric::BuildFileFormat;
 import util::NameGraph;
 import util::Mapping;
 import util::LCS;
 
 import Node;
-import ParseTree;
-import Set;
 
 /*
 
@@ -45,42 +34,23 @@ data Edit
  ;
 
 
-data Null = null();
-
-alias IdAccess = tuple[bool(node) isId, loc(node) getId]; 
-
-bool isDef(node n, IdAccess ia) 
-  = any(node k <- getChildren(n), ia.isId(k));
-  
-loc getDefId(node n, IdAccess ia) 
-  = head([ ia.getId(k) | node k <- getChildren(n), ia.isId(k) ]);
-
-bool isAtom(value x, IdAccess ia) 
-  = (str _ := x || bool _ := x || num _ := x) || (node n := x && ia.isId(n)) || x == null();
-  
-bool isList(value x) 
-  = (list[value] _ := x);
-   
-bool isContains(value x, IdAccess ia) = (node n := x && !ia.isId(n) && !isDef(n, ia) && !isAtom(x, ia));
-
-
-list[Edit] addInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+list[Edit] addInline(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) {
   ops =  addIt(myId, path, n, meta, ia); 
   ops += initIt(myId, path, n, meta, ia);
   return ops;
 }
 
-list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) 
+list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) 
   = [create(myId, path, classOf(n, meta))];
 
 
-list[Edit] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+list[Edit] initIt(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) {
   ops = [];
   ks = getChildren(n);
   i = 0;
   for (value k <- ks) {
     f = field(featureOf(n, i, size(ks), meta));
-    println("<f> = <k>");
+    //println("<f> = <k>");
 
     // NB: check that kn is the id of the current n
     // otherwise we add references to self.    
@@ -130,7 +100,7 @@ list[Edit] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
 }
 
 list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
-       NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta, IdAccess ia) {
+       NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
        
     assert classOf(n1, meta) == classOf(n2, meta);
 
@@ -247,9 +217,7 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
         }
       } 
       else {
-        println("k1 = <k1>");
-        println("k2 = <k2>");
-        throw "Error";
+        throw "Error: unsupported node args: <k1> and <k2>";
       }
    }  
    return changes;
@@ -262,7 +230,7 @@ list[Edit] theDiff(IDClassMap r1,
                         NameGraph g2, 
                         IDMatching mapping, 
                         ASTModelMap meta,
-                        IdAccess ia) {
+                        IDAccess ia) {
   ops = [];
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
     ops += addIt(l2, [], n2, meta, ia);
@@ -288,7 +256,7 @@ list[Edit] theDiff(IDClassMap r1,
 
 
 list[Diff[value]] listDiff(list[value] xs, list[value] ys, 
-    NameGraph g1, NameGraph g2, IDMatching mapping, IdAccess ia) {
+    NameGraph g1, NameGraph g2, IDMatching mapping, IDAccess ia) {
 
   bool eq(value x, value y) = modelEquals(x, y, g1, g2, mapping, ia);
  
@@ -296,7 +264,7 @@ list[Diff[value]] listDiff(list[value] xs, list[value] ys,
   return getDiff(mx, xs, ys, size(xs), size(ys), eq);
 }
 
-bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IdAccess ia) {
+bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IDAccess ia) {
   if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia), getDefId(xn, ia) in mapping.id) {
     return mapping.id[getDefId(xn, ia)] == getDefId(yn, ia);
   }
