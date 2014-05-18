@@ -38,53 +38,57 @@ bool isList(value x)
 bool isContains(value x, IdAccess ia) = (node n := x && !ia.isId(n) && !isDef(n, ia) && !isAtom(x, ia));
 
 
-list[Operation] deleteInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
-  //ops = uninitIt(myId, path, n, meta, ia);
-  ops = deleteIt(myId, path, n, meta, ia); 
-  return ops;
-}
+//list[Operation] deleteInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+//  //ops = uninitIt(myId, path, n, meta, ia);
+//  ops = deleteIt(myId, path, n, meta, ia); 
+//  return ops;
+//}
 
-list[Operation] deleteIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) 
-  = [op_del(myId, path, classOf(n, meta))];
+list[Edit] deleteIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) 
+  = [delete(myId)];
 
 
 // NB: to simplify, assume garbage collections.
 // (this makes add/delete asymmetric...)
 
 
-list[Operation] addInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+list[Edit] addInline(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
   ops =  addIt(myId, path, n, meta, ia); //[op_new(myId, path, classOf(n, meta))];
   ops += initIt(myId, path, n, meta, ia);
   return ops;
 }
 
-list[Operation] addIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) 
-  = [op_new(myId, path, classOf(n, meta))];
+list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) 
+  = [create(myId, path, classOf(n, meta))];
 
 
-list[Operation] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
+list[Edit] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
   ops = [];
   ks = getChildren(n);
   i = 0;
   for (value k <- ks) {
-    f = featureOf(n, i, size(ks), meta);
+    f = field(featureOf(n, i, size(ks), meta));
     println("<f> = <k>");
 
     // NB: check that kn is the id of the current n
     // otherwise we add references to self.    
     if (node kn := k, ia.isId(kn), !isDef(n, ia)) {
+      // set ref
       ops += [op_insert(myId, path + [f], ia.getId(kn))];
     }
     
     if (node kn := k, isDef(kn, ia)) {
+      // set ref
       ops += [op_insert(myId, path + [f], getDefId(kn, ia))];
     }
     
     if (isAtom(k, ia)) {
-      ops += [op_set(myId, path + [f], k, null())];
+      // set prim
+      ops += [setPrim(myId, path + [f], k)];
     }
     
     if (node kn := k, isContains(kn, ia)) {
+      // creates 
       ops += addInline(myId, path + [f], kn, meta, ia);
     }
     
@@ -113,7 +117,7 @@ list[Operation] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess i
   return ops;
 }
 
-list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
+list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
        NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta, IdAccess ia) {
        
     assert classOf(n1, meta) == classOf(n2, meta);
@@ -139,7 +143,6 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
     csr += { <<f1, k1>, <f1, null()>> | <str f1, value k1> <- csr1, f1 notin csr2<0> };
     csr += { <<f2, null()>, <f2, k2>> | <str f2, value k2> <- csr2, f2 notin csr1<0> };
       
-      // Loop over shared features in both sides.
     for (<<str f1, value k1>, <str f2, value k2>> <- csr)  {
       if (node k1n := k1, node k2n := k2, ia.isId(k1n), ia.isId(k2n)) {
         if (d1 <- g1.refs[ia.getId(k1n)], d2 <- g2.refs[ia.getId(k2n)],
@@ -150,24 +153,25 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       
       else if (isAtom(k1,ia), isAtom(k2, ia)) {
         if (k1 != k2) {
-          changes += [op_set(id2, path + [f1], k2, k1)];
+          changes += [setPrim(id2, path + [field(f1)], k2)];
         }
       }
       
       else if (node k1n := k1, node k2n := k2, ia.isId(k1n), isContains(k2n, ia)) {
-        changes += [op_remove(id1, path + [f1], ia.getId(k1n))];
-        changes += addInline(id1, path + [f1], k2n, meta, ia);
+        //changes += [op_remove(id1, path + [field(f1)], ia.getId(k1n))];
+        changes += addInline(id1, path + [field(f1)], k2n, meta, ia);
       } 
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, ia), ia.isId(k2n)) {
-        changes += deleteIt(id1, path + [f1], k1n, meta, ia);
-        changes += [op_insert(id1, path + [f1], ia.getId(k2n))];
+        //changes += deleteIt(id1, path + [f1], k1n, meta, ia);
+        //changes += [op_remove(id1, path + [f1], ...);
+        changes += [setRef(id1, path + [field(f1)], ia.getId(k2n))];
       } 
       
       else if (node k1n := k1, node k2n := k2, isDef(k1n, ia), isDef(k2n, ia)) {
         if (mapping.id[getDefId(k1n, ia)] != getDefId(k2n, ia)) {
-          changes += [op_remove(id1, path + [f1], getDefId(k1n, ia))];
-          changes += [op_insert(id1, path + [f1], getDefId(k2n, ia))];
+          //changes += [op_remove(id1, path + [f1], getDefId(k1n, ia))];
+          changes += [setRef(id1, path + [field(f1)], getDefId(k2n, ia))];
         }
       }
       
@@ -175,8 +179,8 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       // TODO: check that isId does not mean self-id
       else if (node k1n := k1, node k2n := k2, isDef(k1n, ia), ia.isId(k2n)) {
         if (mapping.id[getDefId(k1n, ia)] != g2.refs[ia.getId(k2n)]) {
-          changes += [op_remove(id1, path + [f1], getDefId(k1n, ia))];
-          changes += [op_insert(id1, path + [f1], ia.getId(k2n))];
+          //changes += [op_remove(id1, path + [f1], getDefId(k1n, ia))];
+          changes += [setRef(id1, path + [field(f1)], ia.getId(k2n))];
         }
       }
       
@@ -184,8 +188,8 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       // Or not needed? because will be the same then?
       else if (node k1n := k1, node k2n := k2, ia.isId(k1n), isDef(k2n, ia)) {
         if (mapping.id[g1.refs[ia.getId(k1n)]] != getDefId(k2n, ia)) {
-          changes += [op_remove(id1, path + [f1], ia.getId(k1n))];
-          changes += [op_insert(id1, path + [f1], getDefId(k2n, ia))];
+          //changes += [op_remove(id1, path + [f1], ia.getId(k1n))];
+          changes += [setRef(id1, path + [field(f1)], getDefId(k2n, ia))];
         }
       }
       
@@ -195,13 +199,13 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
            switch (e) {
              case remove(value a, int pos): {
                if (node an := a, isDef(an, ia)) {
-                 changes += [op_removeAt(id1, path + [f1], getDefId(an, ia), pos)];
+                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
                }
                else if (node an := a, ia.isId(an)) {
-                 changes += [op_removeAt(id1, path + [f1], ia.getId(an), pos)];
+                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
                }
                else if (node an := a, isContains(an, ia)) {
-                 ; // TODO: what do we do here?
+                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
                }
                else {
                  assert false: "unsupported list element";
@@ -209,14 +213,13 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
              }
              case add(value a, int pos): {
                if (node an := a, isDef(an, ia)) {
-                 changes += [op_insertAt(id1, path + [f1], getDefId(an, ia), pos)];
+                 changes += [insertAt(id1, path + [field(f1), index(pos)], getDefId(an, ia))];
                }
                else if (node an := a, ia.isId(an)) {
-                 changes += [op_insertAt(id1, path + [f1], ia.getId(an), pos)];
+                 changes += [insertAt(id1, path + [field(f1), index(pos)], ia.getId(an))];
                }
                else if (node an := a, isContains(an, ia)) {
-                 // TODO: should be addInlineAt...
-                 changes += addInline(id1, path + [f], an, meta, ia);
+                 changes += addInline(id1, path + [field(f1), index(pos)], an, meta, ia);
                }
                else {
                  assert false: "unsupported list element";
@@ -228,11 +231,13 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, ia), isContains(k2n, ia)) {
         if (classOf(k1n, meta) == classOf(k2n, meta)) {
-          changes += diffNodes(id1, id2, path + [f1], k1n, k2n, g1, g2, mapping, meta, ia);
+          changes += diffNodes(id1, id2, path + [field(f1)], k1n, k2n, g1, g2, mapping, meta, ia);
         }
         else {
-          //changes += deleteIt(id1, path + [f1], k1n, meta, ia);
-          changes += addInline(id1, path + [f1], k2n, meta, ia);
+          // What if k1n contains defs???
+          // should we do remove here? delete? or neither (i.e. let add override)?
+          //changes += deleteIt(id1, path + [field(f1)], k1n, meta, ia);
+          changes += addInline(id1, path + [field(f1)], k2n, meta, ia);
         }
       } 
       else {
@@ -245,7 +250,7 @@ list[Operation] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
 }
 
 
-list[Operation] theDiff(IDClassMap r1, 
+list[Edit] theDiff(IDClassMap r1, 
                         IDClassMap r2, 
                         NameGraph g1, 
                         NameGraph g2, 
@@ -286,14 +291,14 @@ list[Diff[value]] listDiff(list[value] xs, list[value] ys,
 }
 
 bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IdAccess ia) {
-  if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia)) {
+  if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia), getDefId(xn, ia) in mapping.id) {
     return mapping.id[getDefId(xn, ia)] == getDefId(yn, ia);
   }
   else if (node xn := x, node yn := y, ia.isId(xn), ia.isId(yn)) {
     if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
       return mapping.id[d1] == d2;
     }
-    assert false: "BUG: Could not find uses in ref graph.";
+    assert false: "BUG: Could not find use in ref graph.";
   }
   else if (node xn := x, node yn := y, ia.isId(xn), isDef(yn, ia)) {
     if (d1 <- g1.refs[ia.getId(xn)]) {
@@ -326,59 +331,10 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
   else if (list[value] xl := x, list[value] yl := y) {
     return listDiff(x, y) == [];
   }
-  else if (isAtom(x), isAtom(y)) {
+  else if (isAtom(x, ia), isAtom(y, ia)) {
     return x == y;
   }
   return false;
 }
 
-
-//list[Operation] uninitIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
-//  ops = [];
-//  ks = getChildren(n);
-//  i = 0;
-//  for (value k <- ks) {
-//    f = featureOf(n, i, size(ks), meta);
-//    
-//    // NB!!! isDef, isId have to be before isAtom
-//    if (node kn := k, isDef(kn, ia)) {
-//      ops += [op_remove(myId, path + [f], getDefId(kn, ia))];
-//    }
-//    else if (node kn := k, ia.isId(kn)) {
-//      println("Yes, a ref");
-//      ops += [op_remove(myId, path + [f], ia.getId(kn))];
-//    }
-//    else if (isAtom(k, ia)) {
-//      ; // todo: default values
-//    }
-//    else if (node kn := k, isContains(kn, ia)) {
-//      ops += deleteInline(myId, path + [f], kn, meta, ia);
-//    }
-//    else if (isList(k)) {
-//      if (list[value] xs := k) {
-//        for (x <- xs) {
-//          if (isAtom(x, ia)) {
-//            throw "Atoms cannot be in lists";
-//          }
-//          else if (node kn := k, isContains(kn, ia)) {
-//            ; // TODO: paths need to support indices
-//            // then deleteInline element
-//            // op_removeAt : without the thing that's removed...
-//          }
-//          else if (node kn := k, isDef(kn, ia)) {
-//            ; // what to do here?
-//            // the object itself will be deleted already
-//          }
-//          else if (node kn := k, ia.isId(kn)) {
-//            ; // and here?
-//            // just remove it?
-//          }
-//        }
-//      }
-//    }
-//    
-//    i += 1;
-//  }
-//  return ops;
-//}
    
