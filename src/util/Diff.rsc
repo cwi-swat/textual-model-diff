@@ -1,4 +1,4 @@
-module TheDiff
+module util::Diff
 
 import String;
 import List;
@@ -12,12 +12,38 @@ import lang::derric::NameRel;
 import lang::derric::BuildFileFormat;
 import util::NameGraph;
 import util::Mapping;
+import util::LCS;
 
 import Node;
 import ParseTree;
 import Set;
 
-import lang::Delta::AST;
+/*
+
+Assume garbage collection
+We don't have unordered collections
+We don't support inversion
+*/
+
+
+alias Delta = list[Edit];
+
+alias Path = list[PathElement];
+
+data PathElement
+  = field(str name)
+  | index(int index)
+  ;
+
+data Edit 
+ = setPrim(loc object, Path path, value x)
+ | setRef(loc object, Path path, loc ref) // single
+ | insertAt(loc object, Path path, loc ref) // 
+ | removeAt(loc object, Path path)  // list
+ | create(loc object, Path path, str class) // if path = [], it's "Polanen new" else it's inline "value" creation, if path has indices can be list
+ | delete(loc object)
+ ;
+
 
 data Null = null();
 
@@ -86,13 +112,13 @@ list[Edit] initIt(loc myId, Path path, node n, ASTModelMap meta, IdAccess ia) {
             throw "Atoms cannot be in lists";
           }
           else if (node xn := x, isContains(x, ia)) {
-            ops += addInline(myId, path + [field(f), index(j)], xn, meta, ia);
+            ops += addInline(myId, path + [f, index(j)], xn, meta, ia);
           }
           else if (node xn := x, isDef(xn, ia)) {
-            ops += [insertAt(myId, path + [field(f), index(j)], getDefId(xn, ia))];
+            ops += [insertAt(myId, path + [f, index(j)], getDefId(xn, ia))];
           }
           else if (node xn := x, ia.isId(xn)) {
-            ops += [insertAt(myId, path + [field(f), index(j)], ia.getId(xn))];
+            ops += [insertAt(myId, path + [f, index(j)], ia.getId(xn))];
           }
           j += 1;
         }

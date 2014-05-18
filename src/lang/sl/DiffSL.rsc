@@ -5,8 +5,8 @@ import lang::sl::Syntax;
 import lang::sl::IDE;
 import lang::sl::NameAnalyzer;
 import util::Mapping;
+import util::Diff;
 import util::NameGraph;
-import TheDiff;
 import lang::Delta::AST;
 
 import IO;
