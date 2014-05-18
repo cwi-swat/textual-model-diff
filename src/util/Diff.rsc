@@ -34,13 +34,8 @@ data Edit
  | delete(loc object)
  ;
 
-list[Edit] theDiff(IDClassMap r1, 
-                        IDClassMap r2, 
-                        NameGraph g1, 
-                        NameGraph g2, 
-                        IDMatching mapping, 
-                        ASTModelMap meta,
-                        IDAccess ia) {
+list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2, 
+                   IDMatching mapping, ASTModelMap meta, IDAccess ia) {
   ops = [];
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
     ops += addIt(l2, [], n2, meta, ia);
@@ -152,11 +147,9 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
     csr1 = { <fs1[j], cs1[j]> | j <- [0..size(fs1)] };
     csr2 = { <fs2[j], cs2[j]> | j <- [0..size(fs2)] };
       
-    csr = { <<f1, k1>, <f1, k2>> | <str f1, value k1> <- csr1, <f1, value k2> <- csr2 };
-    csr += { <<f1, k1>, <f1, null()>> | <str f1, value k1> <- csr1, f1 notin csr2<0> };
-    csr += { <<f2, null()>, <f2, k2>> | <str f2, value k2> <- csr2, f2 notin csr1<0> };
+    csr = outerJoin(csr1, csr2, null());
       
-    for (<<str f1, value k1>, <str f2, value k2>> <- csr)  {
+    for (<str f1, value k1, str f2, value k2> <- csr)  {
       if (node k1n := k1, node k2n := k2, ia.isId(k1n), ia.isId(k2n)) {
         if (d1 <- g1.refs[ia.getId(k1n)], d2 <- g2.refs[ia.getId(k2n)],
             d1 in mapping.id ==> mapping.id[d1] != d2) {
@@ -205,28 +198,24 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
          for (e <- edits) {
            switch (e) {
              case remove(value a, int pos): {
-               if (node an := a, isDef(an, ia)) {
-                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
-               }
-               else if (node an := a, ia.isId(an)) {
-                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
-               }
-               else if (node an := a, isContains(an, ia)) {
-                 changes += [removeAt(id1, path + [field(f1), index(pos)])];
+               p = path + [field(f1), index(pos)];
+               if (node an := a) {
+                 changes += [removeAt(id1, p)];
                }
                else {
                  assert false: "unsupported list element";
                }
              }
              case add(value a, int pos): {
+               p = path + [field(f1), index(pos)];
                if (node an := a, isDef(an, ia)) {
-                 changes += [insertAt(id1, path + [field(f1), index(pos)], getDefId(an, ia))];
+                 changes += [insertAt(id1, p, getDefId(an, ia))];
                }
                else if (node an := a, ia.isId(an)) {
-                 changes += [insertAt(id1, path + [field(f1), index(pos)], ia.getId(an))];
+                 changes += [insertAt(id1, p, ia.getId(an))];
                }
                else if (node an := a, isContains(an, ia)) {
-                 changes += addInline(id1, path + [field(f1), index(pos)], an, meta, ia);
+                 changes += addInline(id1, p, an, meta, ia);
                }
                else {
                  assert false: "unsupported list element";
@@ -264,4 +253,11 @@ list[Diff[value]] diffLists(list[value] xs, list[value] ys,
   return getDiff(mx, xs, ys, size(xs), size(ys), eq);
 }
 
+rel[&T, &U, &T, &U] outerJoin(rel[&T, &U] r1, rel[&T, &U] r2, &U null) {
+  r = { <f1, k1, f1, k2> | <str f1, value k1> <- r1, <f1, value k2> <- r2 };
+  r += { <f1, k1, f1, null> | <str f1, value k1> <- r1, f1 notin r2<0> };
+  r += { <f2, null, f2, k2> | <str f2, value k2> <- r2, f2 notin r1<0> };
+  return r;
+} 
+    
    
