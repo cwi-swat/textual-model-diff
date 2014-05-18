@@ -4,6 +4,7 @@ import List;
 import util::NameGraph;
 import util::Mapping;
 import util::LCS;
+import util::Equals;
 
 import Node;
 
@@ -33,9 +34,39 @@ data Edit
  | delete(loc object)
  ;
 
+list[Edit] theDiff(IDClassMap r1, 
+                        IDClassMap r2, 
+                        NameGraph g1, 
+                        NameGraph g2, 
+                        IDMatching mapping, 
+                        ASTModelMap meta,
+                        IDAccess ia) {
+  ops = [];
+  for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
+    ops += addIt(l2, [], n2, meta, ia);
+  }
+  
+  for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
+    ops += initIt(l2, [], n2, meta, ia);
+  }
+
+  for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
+    l2 = mapping.id[l1];
+    if (<_, node n2> <- r2[l2]) {
+      ops += diffNodes(l1, l2, [], n1, n2, g1, g2, mapping, meta, ia);
+    }
+  }
+  
+  for (<loc l1, _, node n1> <- r1, l1 notin mapping.id) {
+    ops += [delete(l1)];
+  }
+
+  return ops;
+}
+
 
 list[Edit] addInline(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) {
-  ops =  addIt(myId, path, n, meta, ia); 
+  ops = addIt(myId, path, n, meta, ia); 
   ops += initIt(myId, path, n, meta, ia);
   return ops;
 }
@@ -170,7 +201,7 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       }
       
       else if (list[value] k1l := k1, list[value] k2l := k2) {
-         edits = listDiff(k1l, k2l, g1, g2, mapping, ia);
+         edits = diffLists(k1l, k2l, g1, g2, mapping, ia);
          for (e <- edits) {
            switch (e) {
              case remove(value a, int pos): {
@@ -224,91 +255,13 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
 }
 
 
-list[Edit] theDiff(IDClassMap r1, 
-                        IDClassMap r2, 
-                        NameGraph g1, 
-                        NameGraph g2, 
-                        IDMatching mapping, 
-                        ASTModelMap meta,
-                        IDAccess ia) {
-  ops = [];
-  for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
-    ops += addIt(l2, [], n2, meta, ia);
-  }
-  
-  for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>) {
-    ops += initIt(l2, [], n2, meta, ia);
-  }
-
-  for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
-    l2 = mapping.id[l1];
-    if (<_, node n2> <- r2[l2]) {
-      ops += diffNodes(l1, l2, [], n1, n2, g1, g2, mapping, meta, ia);
-    }
-  }
-  
-  for (<loc l1, _, node n1> <- r1, l1 notin mapping.id) {
-    ops += [delete(l1)];
-  }
-
-  return ops;
-}
-
-
-list[Diff[value]] listDiff(list[value] xs, list[value] ys, 
+list[Diff[value]] diffLists(list[value] xs, list[value] ys, 
     NameGraph g1, NameGraph g2, IDMatching mapping, IDAccess ia) {
 
   bool eq(value x, value y) = modelEquals(x, y, g1, g2, mapping, ia);
  
   mx = lcsMatrix(xs, ys, eq);
   return getDiff(mx, xs, ys, size(xs), size(ys), eq);
-}
-
-bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mapping, IDAccess ia) {
-  if (node xn := x, node yn := y, isDef(xn, ia), isDef(yn, ia), getDefId(xn, ia) in mapping.id) {
-    return mapping.id[getDefId(xn, ia)] == getDefId(yn, ia);
-  }
-  else if (node xn := x, node yn := y, ia.isId(xn), ia.isId(yn)) {
-    if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
-      return mapping.id[d1] == d2;
-    }
-    assert false: "BUG: Could not find use in ref graph.";
-  }
-  else if (node xn := x, node yn := y, ia.isId(xn), isDef(yn, ia)) {
-    if (d1 <- g1.refs[ia.getId(xn)]) {
-      return mapping.id[d1] == getDefId(yn, ia);
-    }
-    assert false: "BUG: Could not find use in ref graph.";
-  }
-  else if (node xn := x, node yn := y, isDef(xn, ia), ia.isId(yn)) {
-    if (d2 <- g2.refs[ia.getId(yn)]) {
-      return mapping[getDefId(xn, ia)] == d2;
-    }
-    assert false: "BUG: Could not find uses in ref graph.";
-  }
-  else if (node xn := x, node yn := y, isContains(xn, ia), ia.isContains(yn)) {
-    xks = getChildren(xn);
-    yks = getChildren(yn);
-    if (getName(xn) != getName(yn)) {
-      return false;
-    }
-    if (size(xks) != size(yks)) {
-      return false;
-    }
-    for (<a, b> <- zip(xks, yks)) {
-      if (!modelEquals(a, b, g1, g2, mapping, ia)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  else if (list[value] xl := x, list[value] yl := y) {
-    return listDiff(x, y) == [];
-  }
-  else if (isAtom(x, ia), isAtom(y, ia)) {
-    return x == y;
-  }
-  return false;
 }
 
    

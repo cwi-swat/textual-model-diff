@@ -12,7 +12,6 @@ data Diff[&T]
   ;
 
 
-
 list[Diff[&T]] getDiff(map[int,map[int,int]] c, list[&T] x, list[&T] y, int i, int j,
    bool(&T, &T) equals) {
   if (i > 0, j > 0,  equals(x[i-1], y[j-1])) {
