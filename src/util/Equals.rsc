@@ -23,7 +23,10 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
       //println("d2 = <d2>");
       //println("Mapping");
       //iprintln(mapping);
-      return mapping.id[d1] == d2;
+      if (d1 in mapping.id) {
+        return mapping.id[d1] == d2;
+      }
+      return false;
     }
     assert false: "BUG: Could not find use in ref graph.";
   }
