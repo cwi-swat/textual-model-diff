@@ -10,9 +10,9 @@ public class Field extends PathElement {
 	
 	@Override
 	public Object deref(Object obj) {
-		java.lang.reflect.Field field;
+		System.err.println("Dereffing obj: " + obj);
 		try {
-			field = obj.getClass().getField(name);
+			java.lang.reflect.Field field = obj.getClass().getField(name);
 			return field.get(obj);
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
@@ -59,4 +59,8 @@ public class Field extends PathElement {
 		}
 	}
 
+	@Override
+	public String toString() {
+		return "." + name;
+	}
 }

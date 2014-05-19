@@ -25,20 +25,20 @@ public State setScope(Scope st, State g: group(Name name, list[State] states), l
 public Transition setScope(Scope st, Transition t: trans(str event, Ref r), list[str] scope)
  = trans(event, setScope(st, r, [], scope))[@location = t@location][@scope = scope];
 
-public Ref setScope(Scope st, Ref r: ref(str refName), list[str] name, list[str] scope)
- = ref(refName)[@location = r@location][@scope = scope][@ref = findLoc(st, scope, getName(r, name))];
+public Ref setScope(Scope st, Ref r: simple(str refName), list[str] name, list[str] scope)
+ = simple(refName)[@location = r@location][@scope = scope][@ref = findLoc(st, scope, getName(r, name))];
 
-public Ref setScope(Scope st, Ref r: ref(str refName, Ref restName), list[str] name, list[str] scope)
- = ref(refName, restName2)[@location = r@location][@scope = scope][@ref = restName2@ref]
+public Ref setScope(Scope st, Ref r: qualified(str refName, Ref restName), list[str] name, list[str] scope)
+ = qualified(refName, restName2)[@location = r@location][@scope = scope][@ref = restName2@ref]
  when Ref restName2 := setScope(st, restName, name+[refName], scope);
 
 
-list[str] getName(Ref r: ref(str n), list[str] name)
+list[str] getName(Ref r: simple(str n), list[str] name)
 {
   return name + [n];
 }
 
-list[str] getName(Ref r: ref(str n, Ref ref), list[str] name)
+list[str] getName(Ref r: qualified(str n, Ref ref), list[str] name)
 {
   return getName(ref, name + [n]);
 }

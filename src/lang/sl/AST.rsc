@@ -28,8 +28,8 @@ data Transition
   
   
 data Ref
-  = ref(str name)
-  | ref(str name, Ref restName);
+  = simple(str name)
+  | qualified(str name, Ref restName);
 
 data Name
  = name(str name);

@@ -6,9 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Machine {
-	String id;
-	List<Named> states = new ArrayList<Named>();
+public class Mach {
+	public String id;
+	public List<Named> states = new ArrayList<Named>();
 
 	// Runtime
 	State currentState;
@@ -19,7 +19,7 @@ public class Machine {
 	
 	public void step(Scanner input, Writer output) throws IOException {
 		String token = input.nextLine();
-		for (Transition trans: currentState.transitions) {
+		for (Trans trans: currentState.transitions) {
 			if (token.equals(trans.event)) {
 				State target = trans.target;
 				output.write(target.id + "\n");

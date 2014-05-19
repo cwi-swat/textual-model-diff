@@ -7,10 +7,41 @@ import lang::sl::NameAnalyzer;
 import util::Mapping;
 import util::Diff;
 import util::NameGraph;
-import lang::Delta::AST;
 
 import IO;
 import ParseTree;
+
+tuple[list[Edit], map[loc,loc]] diffSL(Machine ast1, Machine ast2) {
+  r1 = getNameGraph(setScope(ast1)); 
+  r2 = getNameGraph(setScope(ast2));
+
+
+  ts1 = slIdClassMap(ast1, r1);
+  ts2 = slIdClassMap(ast2, r2);
+  
+  ia = <isKey, isRef, getId>;
+  
+  matching = identifyEntities(ast1, ast2, ts1, ts2, r1, r2, ia);
+  iprintln(matching);
+
+  meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
+  
+  ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
+  iprintln(ops);
+  return <ops, matching.id>;
+}
+
+//ops = theDiff({}, ts1, <{}, {}, {}>, r1, <r1.defs, {}, ()>, meta, ia); 
+  
+
+tuple[list[Edit], map[loc,loc]] createSL(Machine ast) {
+  r = getNameGraph(setScope(ast)); 
+  ts = slIdClassMap(ast, r);
+  ia = <isKey, isRef, getId>;
+  meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
+  ops = theDiff({}, ts, <{}, {}, {}>, r, <r.defs, {}, ()>, meta, ia);
+  return <ops, ()>;
+}
 
 void testSL(loc v1, loc v2) {
   str src1 = readFile(v1);

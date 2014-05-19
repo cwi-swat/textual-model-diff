@@ -25,8 +25,8 @@ syntax Transition
   ;
  
 syntax Ref 
-  = ref: NID
-  | ref: NID "." Ref;
+  = simple: NID
+  | qualified: NID "." Ref;
 
 syntax String
   = @category="String"  "\"" STRING "\"";

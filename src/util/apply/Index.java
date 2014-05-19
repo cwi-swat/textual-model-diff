@@ -27,5 +27,10 @@ public class Index extends PathElement {
 	public void delete(Object owner) {
 		((List)owner).remove(index);
 	}
+	
+	@Override
+	public String toString() {
+		return "[" + index + "]";
+	}
 
 }

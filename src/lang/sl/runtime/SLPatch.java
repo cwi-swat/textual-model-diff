@@ -6,9 +6,9 @@ import util.apply.Remove;
 
 public class SLPatch extends Patch {
 
-	private Machine machine;
+	private Mach machine;
 
-	public SLPatch(Machine machine) {
+	public SLPatch(Mach machine) {
 		super();
 		this.machine = machine;
 	}

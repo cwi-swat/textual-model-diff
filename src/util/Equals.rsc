@@ -11,18 +11,18 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
     return mapping.id[getDefId(xn, g1, ia)] == getDefId(yn, g2, ia);
   }
   else if (node xn := x, node yn := y, ia.isRefId(xn, g1), ia.isRefId(yn, g2)) {
-    println("G1.refs");
-    iprintln(g1.refs);
-    println("G2.refs");
-    iprintln(g2.refs);
-    println("xn = <xn>");
-    println("yn = <yn>");
+    //println("G1.refs");
+    //iprintln(g1.refs);
+    //println("G2.refs");
+    //iprintln(g2.refs);
+    //println("xn = <xn>");
+    //println("yn = <yn>");
     
     if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
-      println("d1 = <d1>");
-      println("d2 = <d2>");
-      println("Mapping");
-      iprintln(mapping);
+      //println("d1 = <d1>");
+      //println("d2 = <d2>");
+      //println("Mapping");
+      //iprintln(mapping);
       return mapping.id[d1] == d2;
     }
     assert false: "BUG: Could not find use in ref graph.";

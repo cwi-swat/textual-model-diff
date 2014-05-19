@@ -3,21 +3,23 @@ module lang::sl::IDE
 import lang::sl::Syntax;
 import lang::sl::AST;
 import lang::sl::NameAnalyzer;
-import lang::sl::NameMapper;
+import lang::sl::DiffSL;
 
 import ParseTree;
 import util::IDE;
 import vis::Figure;
 import IO;
+import ValueIO;
 import Message;
 
-import TheDiff;
+import util::RuntimeDiff;
 
 public str SL_NAME = "State Language"; //language name
 public str SL_EXT  = "sl"; //file extension
 
 public void sl_register()
 {
+  system = requestSystem();
   Contribution sl_style =
     categories
     (
@@ -33,7 +35,34 @@ public void sl_register()
 
   set[Contribution] sl_contributions =
   {
-    sl_style
+    sl_style,
+    builder(set[Message] ((&T<:Tree) tree) {
+      ast = sl_implode(tree);
+      println("Saving!");
+      prevLoc = tree@\loc[extension="prev"];
+      if (exists(prevLoc)) {
+        println("We have previous version.");
+        prevAst = readTextValueFile(#lang::sl::AST::Machine, prevLoc);
+        <delta, mapping> = diffSL(prevAst, ast);
+        for (d <- delta) {
+          println(d);
+        }
+        iprintln(mapping);
+        println("Sending delta");
+        sendDelta(system, delta, mapping);
+      }
+      else {
+        println("Initial run; creating.");
+        <delta, mapping> = createSL(ast);
+        for (d <- delta) {
+          println(d);
+        }
+        sendDelta(system, delta, mapping);
+      }
+      writeTextValueFile(prevLoc, ast);
+      println("End of save.");
+      return {};
+    })
   };
 
   registerLanguage(SL_NAME, SL_EXT, lang::sl::Syntax::sl_parse);
@@ -42,14 +71,3 @@ public void sl_register()
 
 public lang::sl::AST::Machine sl_implode(Tree t) 
   = implode(#lang::sl::AST::Machine, t);
-
-//--------------------------------------------------------------------------------
-//for quick testing purposes
-//--------------------------------------------------------------------------------
-public void probeer()
-{
-  loc f1 = |project://textual-model-diff/input/test1.sl|;  
-  loc f2 = |project://textual-model-diff/input/test1-v2.sl|;
-
-  matchIt(f1, f2);
-}

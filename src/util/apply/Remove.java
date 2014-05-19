@@ -10,5 +10,10 @@ public class Remove extends Edit {
 	public void accept(Visitor v) {
 		v.visit(this);
 	}
+	
+	@Override
+	public String toString() {
+		return "remove(" + super.toString() + ")";
+	}
 
 }

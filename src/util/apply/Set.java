@@ -19,6 +19,11 @@ public class Set extends Edit {
 		v.visit(this);
 	}
 	
+	@Override
+	public String toString() {
+		return "set(" + super.toString() + ", " + value + ")";
+	}
+	
 
 
 }

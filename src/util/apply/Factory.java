@@ -51,7 +51,7 @@ public class Factory {
 					Path, "path");
 
 	public static final Type Edit_create =
-			tf.constructor(Diff, Edit, "set", 
+			tf.constructor(Diff, Edit, "create", 
 					tf.sourceLocationType(), "object",
 					Path, "path",
 					tf.stringType(), "class");
@@ -100,7 +100,7 @@ public class Factory {
 		if (x.getType().isBool()) {
 			return ((IBool)x).getValue();
 		}
-		if (x.getType().isNode()) {
+		if (x.getType().isNode() && ((IConstructor)x).arity() == 1) {
 			// hack: to get names out of defs.
 			return ((IString)((INode)x).get(0)).getValue();
 		}

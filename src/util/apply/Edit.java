@@ -23,4 +23,9 @@ public abstract class Edit {
 	}
 	
 	public abstract void accept(Visitor v);
+	
+	@Override
+	public String toString() {
+		return key + ", " + path;
+	}
 }

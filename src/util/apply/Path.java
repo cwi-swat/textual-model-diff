@@ -25,5 +25,14 @@ public class Path {
 		}
 		elts[elts.length - 1].delete(owner);
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < elts.length; i++) {
+			sb.append(elts[i].toString());
+		}
+		return sb.toString();
+	}
 
 }

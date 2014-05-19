@@ -19,5 +19,10 @@ public class Insert extends Edit {
 		v.visit(this);
 	}
 	
+	@Override
+	public String toString() {
+		return "insert(" + super.toString() + ", " + obj + ")";
+	}
+	
 
 }

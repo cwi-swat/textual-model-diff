@@ -12,21 +12,44 @@ public class Patch implements Visitor {
 	}
 	
 	public void apply(List<Edit> edits, Map<Object, Object> mapping) {
+		for (Object o: objectSpace.keySet()) {
+			System.err.println("Object: " + o + " = " + objectSpace.get(o));
+		}
 		for (Edit e: edits) {
+			System.err.println("Applying: " + e);
 			e.accept(this);
 		}
 		rekey(mapping);
 	}
 	
 	private void rekey(Map<Object, Object> mapping) {
+		System.err.println("Current OBJECTSPACE");
+		for (Object o: objectSpace.keySet()) {
+			System.err.println("Object: " + o + " = " + objectSpace.get(o));
+		}
+		
 		Map<Object, Object> newObjectSpace = new HashMap<Object, Object>();
+		
 		for (Object oldKey: mapping.keySet()) {
 			assert objectSpace.containsKey(oldKey);
 			Object obj = objectSpace.remove(oldKey);
 			Object newKey = mapping.get(oldKey);
 			newObjectSpace.put(newKey, obj);
 		}
+		
+		// Bring over ids that are not mapped to new ones.
+		// UGH: this is not correct I think.
+		for (Object obj: objectSpace.keySet()) {
+			if (!mapping.containsKey(obj)) {
+				newObjectSpace.put(obj, objectSpace.get(obj));
+			}
+		}
+		
 		objectSpace = newObjectSpace;
+		System.err.println("REKEYED OBJECTSPACE");
+		for (Object o: objectSpace.keySet()) {
+			System.err.println("Object: " + o + " = " + objectSpace.get(o));
+		}
 	}
 
 	@Override

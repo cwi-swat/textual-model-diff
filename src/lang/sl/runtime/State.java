@@ -4,5 +4,5 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class State extends Named {
-	List<Transition> transitions = new ArrayList<Transition>();
+	public List<Trans> transitions = new ArrayList<Trans>();
 }
