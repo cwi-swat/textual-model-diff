@@ -18,5 +18,10 @@ public class Create extends Edit {
 		v.visit(this);
 	}
 	
+	@Override
+	public String toString() {
+		return "create(" + super.toString() + ", " + klass + ")";
+	}
+	
 	
 }
