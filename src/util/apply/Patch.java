@@ -1,10 +1,34 @@
 package util.apply;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Patch implements Visitor {
 	Map<Object, Object> objectSpace;
 	
+	public Patch() {
+		this.objectSpace = new HashMap<Object, Object>();
+	}
+	
+	public void apply(List<Edit> edits, Map<Object, Object> mapping) {
+		for (Edit e: edits) {
+			e.accept(this);
+		}
+		rekey(mapping);
+	}
+	
+	private void rekey(Map<Object, Object> mapping) {
+		Map<Object, Object> newObjectSpace = new HashMap<Object, Object>();
+		for (Object oldKey: mapping.keySet()) {
+			assert objectSpace.containsKey(oldKey);
+			Object obj = objectSpace.remove(oldKey);
+			Object newKey = mapping.get(oldKey);
+			newObjectSpace.put(newKey, obj);
+		}
+		objectSpace = newObjectSpace;
+	}
+
 	@Override
 	public void visit(Create create) {
 		try {
@@ -38,7 +62,7 @@ public class Patch implements Visitor {
 	}
 
 	
-	private Object lookup(Object key) {
+	protected Object lookup(Object key) {
 		return objectSpace.get(key);
 	}
 	

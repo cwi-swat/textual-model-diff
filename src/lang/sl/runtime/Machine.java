@@ -29,5 +29,14 @@ public class Machine {
 			}
 		}
 	}
+
+	public State findInitial() {
+		for (Named n: states) {
+			if (n instanceof State) {
+				return (State) n;
+			}
+		}
+		return null;
+	}
 	
 }

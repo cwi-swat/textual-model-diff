@@ -37,6 +37,13 @@ void testSL(loc v1, loc v2) {
   ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
 
   iprintln(ops);
+  
+  
+  // Initial creation
+  ops = theDiff({}, ts1, <{}, {}, {}>, r1, <r1.defs, {}, ()>, meta, ia); 
+  
+  println("Initial construction of statemachine 1:");
+  iprintln(ops);
 }
 
 bool isRef(node k, NameGraph g) = Ref r := k && r@location in g.uses;
