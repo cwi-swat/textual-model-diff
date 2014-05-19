@@ -51,13 +51,13 @@ public class Patch implements Visitor {
 	}
 
 	@Override
-	public void visit(Remove delete) {
-		if (delete.appliesToRoot()) {
-			objectSpace.remove(delete.getOwnerKey());
+	public void visit(Remove remove) {
+		if (remove.appliesToRoot()) {
+			objectSpace.remove(remove.getOwnerKey());
 		}
 		else {
-			Object owner = lookup(delete.getOwnerKey());
-			delete.getPath().delete(owner );
+			Object owner = lookup(remove.getOwnerKey());
+			remove.getPath().delete(owner );
 		}
 	}
 

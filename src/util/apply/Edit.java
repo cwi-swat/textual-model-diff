@@ -1,7 +1,7 @@
 package util.apply;
 
 
-public abstract class Edit implements Visitable {
+public abstract class Edit {
 	private Object key; // ID (aka loc)
 	private Path path;
 	
@@ -21,4 +21,6 @@ public abstract class Edit implements Visitable {
 	public boolean appliesToRoot() {
 		return getPath().isEmpty();
 	}
+	
+	public abstract void accept(Visitor v);
 }
