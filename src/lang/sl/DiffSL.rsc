@@ -19,26 +19,36 @@ void testSL(loc v1, loc v2) {
   Tree pt2 = sl_parse(v2);
   Machine ast1 = sl_implode(pt1);
   Machine ast2 = sl_implode(pt2);
-  ts1 = slIdClassMap(ast1);
-  ts2 = slIdClassMap(ast2);
+  
   r1 = getNameGraph(setScope(ast1)); 
   r2 = getNameGraph(setScope(ast2));
 
-  matching = identifyEntities(ast1, ast2, ts1, ts2, <isId, getId>);
+
+  ts1 = slIdClassMap(ast1, r1);
+  ts2 = slIdClassMap(ast2, r2);
+  
+  ia = <isKey, isRef, getId>;
+  
+  matching = identifyEntities(ast1, ast2, ts1, ts2, r1, r2, ia);
+  iprintln(matching);
 
   meta = astModelMap(#lang::sl::AST::Machine);
   
-  ops = theDiff(ts1, ts2, r1, r2, matching, meta, <isId, getId>);
+  ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
 
   iprintln(ops);
 }
 
-bool isId(node k) = name(_) := k;
-loc getId(node k) = n@location when Name n := k;
+bool isRef(node k, NameGraph g) = Ref r := k && r@location in g.uses;
+bool isKey(node k, NameGraph g) = Name n := k && n@location in g.defs;
 
+loc getId(node k) {
+  if (Ref r := k) return r@location;
+  if (Name n := k) return n@location;
+}
 
-IDClassMap slIdClassMap(Machine m) {
-  return idClassMap(m, isId, getId);
+IDClassMap slIdClassMap(Machine m, NameGraph g) {
+  return idClassMap(m, g, <isKey, isRef, getId>);
 }
 
 
