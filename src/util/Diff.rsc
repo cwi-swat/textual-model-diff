@@ -34,6 +34,14 @@ data Edit
  | delete(loc object)
  ;
 
+data Edit2 
+ = setPrim(loc object, Path path, value x)
+ | \insert(loc object, Path path, loc ref) // single
+ | remove(loc object, Path path)  // list
+ | create(loc object, Path path, str class) // if path = [], it's "Polanen new" else it's inline "value" creation, if path has indices can be list
+ ;
+
+
 list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2, 
                    IDMatching mapping, ASTModelMap meta, IDAccess ia) {
 

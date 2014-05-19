@@ -23,7 +23,7 @@ data State
   | group(Name id, list[State] states);
 
 data Transition
-  = trans(str event, Ref ref)
+  = trans(str event, Ref target)
   ;
   
   

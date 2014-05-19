@@ -19,6 +19,10 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
     println("yn = <yn>");
     
     if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
+      println("d1 = <d1>");
+      println("d2 = <d2>");
+      println("Mapping");
+      iprintln(mapping);
       return mapping.id[d1] == d2;
     }
     assert false: "BUG: Could not find use in ref graph.";

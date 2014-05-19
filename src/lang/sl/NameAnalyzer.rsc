@@ -29,7 +29,8 @@ public Ref setScope(Scope st, Ref r: ref(str refName), list[str] name, list[str]
  = ref(refName)[@location = r@location][@scope = scope][@ref = findLoc(st, scope, getName(r, name))];
 
 public Ref setScope(Scope st, Ref r: ref(str refName, Ref restName), list[str] name, list[str] scope)
- = ref(refName, setScope(st, restName, name+[refName], scope))[@location = r@location][@scope = scope][@ref = findLoc(st, scope, name+[refName])];
+ = ref(refName, restName2)[@location = r@location][@scope = scope][@ref = restName2@ref]
+ when Ref restName2 := setScope(st, restName, name+[refName], scope);
 
 
 list[str] getName(Ref r: ref(str n), list[str] name)
