@@ -3,16 +3,13 @@ package util.apply;
 import java.util.Map;
 
 public class Patch implements Visitor {
-
 	Map<Object, Object> objectSpace;
 	
-	
-	@SuppressWarnings("static-access")
 	@Override
 	public void visit(Create create) {
 		Class<?> cls;
 		try {
-			cls = this.getClass().forName(create.getKlass());
+			cls = Class.forName(create.getKlass());
 			Object obj = cls.newInstance();
 			if (create.getPath().isEmpty()) {
 				objectSpace.put(create.getOwnerKey(), obj);
@@ -31,7 +28,7 @@ public class Patch implements Visitor {
 	}
 
 	@Override
-	public void visit(Delete delete) {
+	public void visit(Remove delete) {
 		if (delete.getPath().isEmpty()) {
 			objectSpace.remove(delete.getOwnerKey());
 		}
@@ -47,29 +44,15 @@ public class Patch implements Visitor {
 	}
 	
 	@Override
-	public void visit(InsertAt insertAt) {
+	public void visit(Insert insertAt) {
 		Object obj = lookup(insertAt.getInsertedKey());
 		Object owner = lookup(insertAt.getOwnerKey());
 		insertAt.getPath().assign(owner, obj);
 	}
 
 	@Override
-	public void visit(RemoveAt removeAt) {
-		Object owner = lookup(removeAt.getOwnerKey());
-		removeAt.getPath().delete(owner);
-	}
-
-	@Override
-	public void visit(SetPrim setPrim) {
+	public void visit(Set setPrim) {
 		Object owner = lookup(setPrim.getOwnerKey());
 		setPrim.getPath().assign(owner, setPrim.getValue());
 	}
-
-	@Override
-	public void visit(SetRef setRef) {
-		Object obj = lookup(setRef.getRefKey());
-		Object owner = lookup(setRef.getOwnerKey());
-		setRef.getPath().assign(owner, obj);
-	}
-
 }

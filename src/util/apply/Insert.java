@@ -1,11 +1,11 @@
 package util.apply;
 
 
-public class InsertAt extends Edit {
+public class Insert extends Edit {
 
 	private Object obj;
 
-	InsertAt(Object owner, Path path, Object obj) {
+	Insert(Object owner, Path path, Object obj) {
 		super(owner, path);
 		this.obj = obj;
 	}

@@ -2,7 +2,6 @@ package util.apply;
 
 
 public abstract class Edit implements Visitable {
-
 	private Object key; // ID (aka loc)
 	private Path path;
 	

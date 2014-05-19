@@ -2,7 +2,6 @@ package util.apply;
 
 
 public class Create extends Edit {
-
 	private String klass;
 
 	Create(Object owner, Path path, String klass) {

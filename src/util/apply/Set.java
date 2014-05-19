@@ -1,11 +1,11 @@
 package util.apply;
 
 
-public class SetPrim extends Edit {
+public class Set extends Edit {
 
 	private Object value;
 
-	public SetPrim(Object owner, Path path, Object value) {
+	public Set(Object owner, Path path, Object value) {
 		super(owner, path);
 		this.value = value;
 	}

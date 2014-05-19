@@ -1,9 +1,8 @@
 package util.apply;
 
+public class Remove extends Edit {
 
-public class RemoveAt extends Edit {
-
-	RemoveAt(Object owner, Path path) {
+	Remove(Object owner, Path path) {
 		super(owner, path);
 	}
 
