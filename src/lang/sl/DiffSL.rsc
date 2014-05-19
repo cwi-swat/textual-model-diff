@@ -32,7 +32,7 @@ void testSL(loc v1, loc v2) {
   matching = identifyEntities(ast1, ast2, ts1, ts2, r1, r2, ia);
   iprintln(matching);
 
-  meta = astModelMap(#lang::sl::AST::Machine);
+  meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
   
   ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
 

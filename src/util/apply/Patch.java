@@ -7,11 +7,10 @@ public class Patch implements Visitor {
 	
 	@Override
 	public void visit(Create create) {
-		Class<?> cls;
 		try {
-			cls = Class.forName(create.getKlass());
+			Class<?> cls = Class.forName(create.getKlass());
 			Object obj = cls.newInstance();
-			if (create.getPath().isEmpty()) {
+			if (create.appliesToRoot()) {
 				objectSpace.put(create.getOwnerKey(), obj);
 			}
 			else {
@@ -29,7 +28,7 @@ public class Patch implements Visitor {
 
 	@Override
 	public void visit(Remove delete) {
-		if (delete.getPath().isEmpty()) {
+		if (delete.appliesToRoot()) {
 			objectSpace.remove(delete.getOwnerKey());
 		}
 		else {
@@ -44,10 +43,11 @@ public class Patch implements Visitor {
 	}
 	
 	@Override
-	public void visit(Insert insertAt) {
-		Object obj = lookup(insertAt.getInsertedKey());
-		Object owner = lookup(insertAt.getOwnerKey());
-		insertAt.getPath().assign(owner, obj);
+	public void visit(Insert insert) {
+		assert !insert.appliesToRoot();
+		Object obj = lookup(insert.getInsertedKey());
+		Object owner = lookup(insert.getOwnerKey());
+		insert.getPath().assign(owner, obj);
 	}
 
 	@Override

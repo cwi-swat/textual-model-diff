@@ -51,14 +51,14 @@ IDClassMap idClassMap(&T<:node ast, NameGraph g, IDAccess ia)
 // because differently typed arguments must have 
 // different labels in Rascal
 // Assume: fields must be labeled, as of now.
-ASTModelMap astModelMap(type[&T<:node] theAdt) 
+ASTModelMap astModelMap(type[&T<:node] theAdt, str pkg) 
   //= {  <x, capitalize(x), [ f | label(str f, _) <- flds ]> 
 //BUG:  //      | /cons(label(str x, _), flds, _) <- theAdt };
 {
   r = {};
   visit (theAdt) {
     case cons(label(str x, _), flds, _):
-      r += { <x, capitalize(x), [ f | label(str f, _) <- flds ]> };
+      r += { <x, pkg + "." + capitalize(x), [ f | label(str f, _) <- flds ]> };
   }
   return r;
 }

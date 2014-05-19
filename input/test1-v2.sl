@@ -1,11 +1,13 @@
 machine m
 
   state init
-    barf => bar when init > 1 + init
+    barf => bar 
   end
   
   state bar
       biach => bar
-    end
-    
+  end
+   
+  state another
+  end 
 end

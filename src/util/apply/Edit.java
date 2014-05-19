@@ -17,4 +17,8 @@ public abstract class Edit implements Visitable {
 	public Path getPath() {
 		return path;
 	}
+	
+	public boolean appliesToRoot() {
+		return getPath().isEmpty();
+	}
 }

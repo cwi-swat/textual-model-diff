@@ -1,16 +1,12 @@
 machine m
 
   state init
-    bang => foo.bar when bar > 1 + init
+    barf => foo.bar
   end
   
-  foo
-  {    
-
+  foo {    
     state bar
-      biach => init
+      biach => bar
     end
-    
-    
   }
 end
