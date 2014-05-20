@@ -1,12 +1,18 @@
 machine m
 
   state init
-    barf => foo.bar
+    foo => foo.bar
   end
-  
+
   foo {    
     state bar
-      biach => bar
+      baz => init
     end
+  state x
+  end
+    
   }
+
+  state x
+  end
 end

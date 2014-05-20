@@ -43,7 +43,7 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
     ops += addIt(l2, [], n2, meta, ia);
   
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>)
-    ops += initIt(l2, [], n2, g2, meta, ia);
+    ops += initIt(l2, [], n2, g2, mapping, meta, ia);
 
   for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
     l2 = mapping.id[l1];
@@ -58,9 +58,9 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
 }
 
 
-list[Edit] addInline(loc myId, Path path, node n, NameGraph g, ASTModelMap meta, IDAccess ia) {
+list[Edit] addInline(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
   ops = addIt(myId, path, n, meta, ia); 
-  ops += initIt(myId, path, n, g, meta, ia);
+  ops += initIt(myId, path, n, g, mapping, meta, ia);
   return ops;
 }
 
@@ -68,7 +68,7 @@ list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia)
   = [create(myId, path, classOf(n, meta))];
 
 
-list[Edit] initIt(loc myId, Path path, node n, NameGraph g, ASTModelMap meta, IDAccess ia) {
+list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
   ops = [];
   ks = getChildren(n);
   i = 0;
@@ -81,7 +81,12 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, ASTModelMap meta, ID
     if (node kn := k, ia.isRefId(kn, g), !isDef(n, g, ia)) {
       // set ref
       if (d2 <- g.refs[ia.getId(kn)]) {
-        ops += [\insert(myId, path + [f], d2)];
+        if (org <- mapping.id, mapping.id[org] == d2) {
+          ops += [\insert(myId, path + [f], org)];
+        }
+        else {
+          ops += [\insert(myId, path + [f], d2)];
+        }
       }
       else {
         assert false;
@@ -90,7 +95,13 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, ASTModelMap meta, ID
     
     if (node kn := k, isDef(kn, g, ia)) {
       // set ref
-      ops += [\insert(myId, path + [f], getDefId(kn, g, ia))];
+      d2 = getDefId(kn, g, ia);
+      if (org <- mapping.id, mapping.id[org] == d2) {
+        ops += [\insert(myId, path + [f], org)];
+      }
+      else {
+        ops += [\insert(myId, path + [f], org)];
+      }
     }
     
     if (isAtom(k, g, ia)) {
@@ -111,13 +122,28 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, ASTModelMap meta, ID
             throw "Atoms cannot be in lists";
           }
           else if (node xn := x, isContains(x, g, ia)) {
-            ops += addInline(myId, path + [f, index(j)], xn, g, meta, ia);
+            ops += addInline(myId, path + [f, index(j)], xn, g, mapping, meta, ia);
           }
           else if (node xn := x, isDef(xn, g, ia)) {
-            ops += [\insert(myId, path + [f, index(j)], getDefId(xn, g, ia))];
+            d2 = getDefId(xn, g, ia);
+            if (org <- mapping.id, mapping.id[org] == d2) {
+              ops += [\insert(myId, path + [f, index(j)], org)];
+            }
+            else {
+              ops += [\insert(myId, path + [f, index(j)], d2)];
+            }
           }
           else if (node xn := x, ia.isRefId(xn, g)) {
-            ops += [\insert(myId, path + [f, index(j)], ia.getId(xn))];
+            u2 = ia.getId(xn);
+            if (d2 <- g.refs[u2]) {
+              if (org <- mapping.id, mapping.id[org] == d2) {
+                ops += [\insert(myId, path + [f, index(j)], org)];
+              }
+              else {
+                ops += [\insert(myId, path + [f, index(j)], org)];
+              }
+            }
+            
           }
           j += 1;
         }
@@ -157,7 +183,13 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       if (node k1n := k1, node k2n := k2, ia.isRefId(k1n, g1), ia.isRefId(k2n, g2)) {
         if (d1 <- g1.refs[ia.getId(k1n)], d2 <- g2.refs[ia.getId(k2n)],
             d1 in mapping.id ==> mapping.id[d1] != d2) {
-          changes += [\insert(id1, path + [field(f1)], d2)];
+          if (org <- mapping.id, mapping.id[org] == d2) {
+            // always update to old id if possible
+            changes += [\insert(id1, path + [field(f1)], org)];
+          }
+          else {
+            changes += [\insert(id1, path + [field(f1)], d2)];
+          }
         } 
       } 
       
@@ -168,12 +200,17 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       }
       
       else if (node k1n := k1, node k2n := k2, ia.isRefId(k1n, g1), isContains(k2n, g2, ia)) {
-        changes += addInline(id1, path + [field(f1)], k2n, meta, ia);
+        changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
       } 
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, g1, ia), ia.isRefId(k2n, g2)) {
         if (d2 <- g2.refs[ia.getId(k2n)]) {
-          changes += [\insert(id1, path + [field(f1)], d2)];
+          if (org <- mapping.id, mapping.id[org] == d2) {
+            changes += [\insert(id1, path + [field(f1)], org)];
+          }
+          else {
+            changes += [\insert(id1, path + [field(f1)], d2)];
+          }
         }
         else {
           assert false;
@@ -182,7 +219,13 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       
       else if (node k1n := k1, node k2n := k2, isDef(k1n, g1, ia), isDef(k2n, g2, ia)) {
         if (mapping.id[getDefId(k1n, g1, ia)] != getDefId(k2n, g2, ia)) {
-          changes += [\insert(id1, path + [field(f1)], getDefId(k2n, g2, ia))];
+          d2 = getDefId(k2n, g2, ia);
+          if (org <- mapping.id, mapping.id[org] == d2) {
+            changes += [\insert(id1, path + [field(f1)], org)];
+          }
+          else {
+            changes += [\insert(id1, path + [field(f1)], d2)];
+          }
         }
       }
       
@@ -191,7 +234,12 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       else if (node k1n := k1, node k2n := k2, isDef(k1n, g1, ia), ia.isRefId(k2n, g2)) {
         if (d2 <- g2.refs[ia.getId(k2n)]) {
           if (mapping.id[getDefId(k1n, g1, ia)] != d2) {
-            changes += [\insert(id1, path + [field(f1)], d2)];
+            if (org <- mapping.id, mapping[org] == d2) {
+              changes += [\insert(id1, path + [field(f1)], org)];
+            }
+            else {
+              changes += [\insert(id1, path + [field(f1)], d2)];
+            }
           }
         }
         else {
@@ -202,8 +250,14 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       // TODO: check that isId does not mean self-id
       // Or not needed? because will be the same then?
       else if (node k1n := k1, node k2n := k2, ia.isRefId(k1n, g1), isDef(k2n, g2, ia)) {
-        if (mapping.id[g1.refs[ia.getId(k1n)]] != getDefId(k2n, g2, ia)) {
-          changes += [\insert(id1, path + [field(f1)], getDefId(k2n, g2, ia))];
+        d2 = getDefId(k2n, g2, ia);
+        if (mapping.id[g1.refs[ia.getId(k1n)]] != d2) {
+          if (org <- mapping.id, mapping.id[org] == d2) { 
+            changes += [\insert(id1, path + [field(f1)], org)];
+          }
+          else {
+            changes += [\insert(id1, path + [field(f1)], d2)];
+          }
         }
       }
       
@@ -228,13 +282,27 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
              case add(value a, int pos): {
                p = path + [field(f1), index(pos)];
                if (node an := a, isDef(an, g2, ia)) {
-                 changes += [\insert(id1, p, getDefId(an, g2, ia))];
+                 d2 = getDefId(an, g2, ia);
+                 if (org <- mapping.id, mapping.id[org] == d2) {
+                   changes += [\insert(id1, p, org)];
+                 }
+                 else {
+                   changes += [\insert(id1, p, d2)];
+                 }
                }
                else if (node an := a, ia.isRefId(an, g2)) {
-                 changes += [\insert(id1, p, ia.getId(an))];
+                 u2 = ia.getId(an);
+                 if (d2 <- g2.refs[u2]) {
+                   if (org <- mapping.id, mapping.id[org] == d2) {
+                     changes += [\insert(id1, p, org)];
+                   }
+                   else {
+                     changes += [\insert(id1, p, d2)];
+                   }
+                 }
                }
                else if (node an := a, isContains(an, g2, ia)) {
-                 changes += addInline(id1, p, an, g2, meta, ia);
+                 changes += addInline(id1, p, an, g2, mapping, meta, ia);
                }
                else {
                  assert false: "unsupported list element";
@@ -252,7 +320,7 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
           // What if k1n contains defs???
           // should we do remove here? delete? or neither (i.e. let add override)?
           //changes += deleteIt(id1, path + [field(f1)], k1n, meta, ia);
-          changes += addInline(id1, path + [field(f1)], k2n, meta, ia);
+          changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
         }
       } 
       else {

@@ -30,6 +30,7 @@ public class Field extends PathElement {
 		java.lang.reflect.Field field;
 		try {
 			field = owner.getClass().getField(name);
+			System.err.println("Assigning " + owner + "." + name + " = " + obj);
 			field.set(owner, obj);
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);
