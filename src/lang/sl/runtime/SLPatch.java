@@ -7,10 +7,9 @@ import util.apply.Remove;
 public class SLPatch extends Patch {
 
 	private Mach machine;
-
-	public SLPatch(Mach machine) {
-		super();
-		this.machine = machine;
+	
+	public Mach getMachine() {
+		return machine;
 	}
 	
 	@Override
@@ -27,9 +26,13 @@ public class SLPatch extends Patch {
 	
 	@Override
 	public void visit(Create create) {
-		if (lookup(create.getOwnerKey()) instanceof State) {
-			System.out.println("Creating a new state");
-		}
 		super.visit(create);
+		if (lookup(create.getOwnerKey()) instanceof State) {
+			System.out.println("Created a new state");
+		}
+		if (lookup(create.getOwnerKey()) instanceof Mach) {
+			System.out.println("Created a new machine");
+			this.machine = (Mach) lookup(create.getOwnerKey());
+		}
 	}
 }

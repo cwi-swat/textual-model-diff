@@ -17,12 +17,14 @@ public class Mach {
 		currentState = initial;
 	}
 	
-	public void step(Scanner input, Writer output) throws IOException {
-		String token = input.nextLine();
+	public void step(String event, Writer output) throws IOException {
 		for (Trans trans: currentState.transitions) {
-			if (token.equals(trans.event)) {
+			System.err.println("Checking trans " + trans + " on " + event);
+			if (event.equals(trans.event)) {
+				System.err.println("Fire!");
+				System.err.println("Going to state: " + trans.target.id);
 				State target = trans.target;
-				output.write(target.id + "\n");
+				output.write(target.id);
 				trans.numberOfFirings++;
 				currentState = target;
 				break;

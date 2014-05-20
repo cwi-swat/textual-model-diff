@@ -20,6 +20,7 @@ public str SL_EXT  = "sl"; //file extension
 public void sl_register()
 {
   system = requestSystem();
+  runInterpreter(system, "lang.sl.runtime.Main");
   Contribution sl_style =
     categories
     (

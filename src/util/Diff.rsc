@@ -7,6 +7,7 @@ import util::LCS;
 import util::Equals;
 
 import Node;
+import IO;
 
 /*
 
@@ -207,7 +208,12 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       }
       
       else if (list[value] k1l := k1, list[value] k2l := k2) {
+         println("Two lists!!!");
+         println("l1 = <k1l>");
+         println("l2 = <k2l>");
+         
          edits = diffLists(k1l, k2l, g1, g2, mapping, ia);
+         println("Edits: <edits>");
          for (e <- edits) {
            switch (e) {
              case remove(value a, int pos): {
