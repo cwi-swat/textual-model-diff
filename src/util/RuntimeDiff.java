@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import lang.sl.runtime.SLPatch;
-
 import org.eclipse.imp.pdb.facts.IInteger;
 import org.eclipse.imp.pdb.facts.IList;
 import org.eclipse.imp.pdb.facts.IMap;
@@ -22,7 +20,6 @@ import util.apply.Patch;
 import util.apply.Patchable;
 
 public class RuntimeDiff {
-	private static Map<Integer, Patch> systems = new HashMap<Integer, Patch>();
 	private static Map<Integer, Queue<Delta>> queues = new HashMap<Integer, Queue<Delta>>();
 	private static int systemCount = 0;
 	
@@ -33,9 +30,9 @@ public class RuntimeDiff {
 	}
 	
 	public IInteger requestSystem() {
-		Patch p = new SLPatch();
-		systems.put(systemCount++, p);
-		return values.integer(systemCount - 1);
+//		Patch p = new SLPatch();
+//		systems.put(systemCount++, p);
+		return values.integer(systemCount++);
 	}
 	
 	public void runInterpreter(IInteger id, IString appClass) {
@@ -43,7 +40,6 @@ public class RuntimeDiff {
 		System.out.println("Got id: " + systemId);
 		try {
 			Patchable r = (Patchable) Class.forName(appClass.getValue()).newInstance();
-			r.setSystem(systems.get(systemId));
 			queues.put(systemId, r.getQueue());
 			new Thread(r).run();
 		} catch (InstantiationException e) {
@@ -58,11 +54,6 @@ public class RuntimeDiff {
 	public void sendDelta(IInteger id, IList delta, IMap mapping) {
 		System.out.println("id = " + id);
 		int systemId = Integer.parseInt(id.getStringRepresentation());
-		if (!systems.containsKey(systemId)) {
-			throw RuntimeExceptionFactory.illegalArgument(id, null, null);
-		}
-		Patch sys = systems.get(systemId);
-		System.out.println("sys = " + sys);
 		List<Edit> objDelta = Factory.convert(delta);
 		System.out.println("objDelta = " + objDelta);
 		Map<Object, Object> objMapping = new HashMap<Object, Object>();
@@ -71,12 +62,9 @@ public class RuntimeDiff {
 		}
 		System.out.println("objMapping = " + objMapping);
 		Delta theDelta = new Delta(objDelta, objMapping);
-		if (queues.containsKey(systemId)) {
-			queues.get(systemId).add(theDelta);
+		if (!queues.containsKey(systemId)) {
+			throw RuntimeExceptionFactory.illegalArgument(id, null, null);
 		}
-		else {
-			sys.apply(theDelta);
-		}
-			
+		queues.get(systemId).add(theDelta);
 	}
 }

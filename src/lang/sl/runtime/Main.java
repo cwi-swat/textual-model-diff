@@ -1,11 +1,16 @@
 package lang.sl.runtime;
 
+import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringWriter;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -13,18 +18,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import util.apply.Delta;
-import util.apply.Patch;
 import util.apply.Patchable;
 
 public class Main implements Patchable {
 	private Queue<Delta> deltaQueue;
 	private SLPatch system;
+	private ByteArrayOutputStream boas = new ByteArrayOutputStream();
 
 	public Main() {
 		this.deltaQueue = new ConcurrentLinkedQueue<Delta>();
+		this.system = new SLPatch(new PrintStream(boas));
 	}
 
 	@Override
@@ -40,12 +49,18 @@ public class Main implements Patchable {
 
 	protected void setup() {
 		JFrame frame = new JFrame();
-		frame.setLayout(new FlowLayout());
+		frame.setLayout(new BorderLayout());
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		Container panel = frame.getContentPane();
 		final JLabel status = new JLabel("");
 		final JTextField event = new JTextField(10);
+		Font font = new Font("Monaco", Font.PLAIN, 12);
 		final JTextField output = new JTextField(40);
+		output.setFont(font);
+		final JTextArea log = new JTextArea(10, 50);
+		log.setFont(font);
+		JScrollPane logPane = new JScrollPane(log); 
+		log.setEditable(false);
 		JButton update = new JButton("Update");
 		JButton step = new JButton("Step");
 		
@@ -62,6 +77,7 @@ public class Main implements Patchable {
 						m.init(m.findInitial());
 					}
 				}
+				log.setText(boas.toString());
 			}
 		});
 		
@@ -79,11 +95,18 @@ public class Main implements Patchable {
 			}
 		});
 		
-		panel.add(event);
 		panel.add(step);
-		panel.add(update);
+//		panel.add(update);
 		panel.add(status);
-		panel.add(output);
+		JPanel top = new JPanel(new FlowLayout());
+		JLabel eventLabel = new JLabel("Enter event:");
+		top.add(eventLabel);
+		top.add(event);
+		top.add(step);
+		top.add(update);
+		panel.add(top, BorderLayout.PAGE_START);
+		panel.add(output, BorderLayout.CENTER);
+		panel.add(logPane, BorderLayout.PAGE_END);
 		
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -96,8 +119,4 @@ public class Main implements Patchable {
 		return deltaQueue;
 	}
 
-	@Override
-	public void setSystem(Patch patch) {
-		system = (SLPatch) patch;
-	}
 }

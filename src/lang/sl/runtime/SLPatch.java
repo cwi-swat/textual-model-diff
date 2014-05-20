@@ -1,10 +1,16 @@
 package lang.sl.runtime;
 
+import java.io.PrintStream;
+
 import util.apply.Create;
 import util.apply.Patch;
 import util.apply.Remove;
 
 public class SLPatch extends Patch {
+
+	public SLPatch(PrintStream log) {
+		super(log);
+	}
 
 	private Mach machine;
 	
@@ -17,7 +23,7 @@ public class SLPatch extends Patch {
 		if (remove.appliesToRoot() && lookup(remove.getOwnerKey()) == machine.currentState) {
 			State start = machine.findInitial();
 			if (start == null) {
-				throw new RuntimeException("removal of last state, cannot continue");
+				log.println("Removed current state and no initial found.");
 			}
 			machine.currentState = start;
 		}
@@ -27,12 +33,21 @@ public class SLPatch extends Patch {
 	@Override
 	public void visit(Create create) {
 		super.visit(create);
-		if (lookup(create.getOwnerKey()) instanceof State) {
-			System.out.println("Created a new state");
+		if (create.appliesToRoot() && lookup(create.getOwnerKey()) instanceof State) {
+			log.println("Created a new state");
+			// Hmm, why the duplication...
+			if (machine != null && machine.currentState == null) {
+				log.println("Reinit of initial state");
+				machine.currentState = machine.findInitial();
+			}
 		}
-		if (lookup(create.getOwnerKey()) instanceof Mach) {
-			System.out.println("Created a new machine");
+		if (create.appliesToRoot() && lookup(create.getOwnerKey()) instanceof Mach) {
+			log.println("Created a new machine");
 			this.machine = (Mach) lookup(create.getOwnerKey());
+			if (machine != null && machine.currentState == null) {
+				log.println("Reinit of initial state");
+				machine.currentState = machine.findInitial();
+			}
 		}
 	}
 }

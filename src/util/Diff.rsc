@@ -262,16 +262,13 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       }
       
       else if (list[value] k1l := k1, list[value] k2l := k2) {
-         println("Two lists!!!");
-         println("l1 = <k1l>");
-         println("l2 = <k2l>");
-         
          edits = diffLists(k1l, k2l, g1, g2, mapping, ia);
-         println("Edits: <edits>");
+         offset = 0;
          for (e <- edits) {
            switch (e) {
              case remove(value a, int pos): {
-               p = path + [field(f1), index(pos)];
+               p = path + [field(f1), index(pos + offset)];
+               offset -= 1;
                if (node an := a) {
                  changes += [remove(id1, p)];
                }
@@ -281,6 +278,7 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
              }
              case add(value a, int pos): {
                p = path + [field(f1), index(pos)];
+               offset += 1;
                if (node an := a, isDef(an, g2, ia)) {
                  d2 = getDefId(an, g2, ia);
                  if (org <- mapping.id, mapping.id[org] == d2) {

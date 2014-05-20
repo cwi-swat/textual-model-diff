@@ -3,6 +3,7 @@ machine m
      foo => bar.w
    end
    
+   
    bar {
      state w
        foo => x

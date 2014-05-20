@@ -1,31 +1,34 @@
 package util.apply;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Patch implements Visitor {
 	Map<Object, Object> objectSpace;
+	protected PrintStream log;
 	
-	public Patch() {
+	public Patch(PrintStream log) {
 		this.objectSpace = new HashMap<Object, Object>();
+		this.log = log;
 	}
 	
 	public void apply(Delta delta) {
-		for (Object o: objectSpace.keySet()) {
-			System.err.println("Object: " + o + " = " + objectSpace.get(o));
-		}
+//		for (Object o: objectSpace.keySet()) {
+//			log.println("Object: " + o + " = " + objectSpace.get(o));
+//		}
 		for (Edit e: delta.getEdits()) {
-			System.err.println("Applying: " + e);
+			log.println("Applying: " + e.getClass());
 			e.accept(this);
 		}
 		rekey(delta.getMapping());
 	}
 	
 	private void rekey(Map<Object, Object> mapping) {
-		System.err.println("Current OBJECTSPACE");
-		for (Object o: objectSpace.keySet()) {
-			System.err.println("Object: " + o + " = " + objectSpace.get(o));
-		}
+//		log.println("Current OBJECTSPACE");
+//		for (Object o: objectSpace.keySet()) {
+//			log.println("Object: " + o + " = " + objectSpace.get(o));
+//		}
 		
 		Map<Object, Object> newObjectSpace = new HashMap<Object, Object>();
 		
@@ -45,10 +48,10 @@ public class Patch implements Visitor {
 		}
 		
 		objectSpace = newObjectSpace;
-		System.err.println("REKEYED OBJECTSPACE");
-		for (Object o: objectSpace.keySet()) {
-			System.err.println("Object: " + o + " = " + objectSpace.get(o));
-		}
+//		log.println("REKEYED OBJECTSPACE");
+//		for (Object o: objectSpace.keySet()) {
+//			log.println("Object: " + o + " = " + objectSpace.get(o));
+//		}
 	}
 
 	@Override
@@ -93,7 +96,7 @@ public class Patch implements Visitor {
 		assert !insert.appliesToRoot();
 		Object obj = lookup(insert.getInsertedKey());
 		if (obj == null) {
-			System.err.println("Object is null!!!!");
+			log.println("Object is null!!!!");
 		}
 		Object owner = lookup(insert.getOwnerKey());
 		insert.getPath().assign(owner, obj);
