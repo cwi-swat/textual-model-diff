@@ -17,7 +17,7 @@ start syntax Machine
   = mach: "machine" TID id State * /*unordered*/ states "end";
   
 syntax State
-  = state: "state" TID id Transition* /*ordered*/ transitions "end"
+  = state: "state" TID id Transition* /*ordered*/ transitions 
   | group: TID id "{" State* /*unordered*/ states "}";
   
 syntax Transition

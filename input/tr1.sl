@@ -1,15 +1,17 @@
 machine m 
    state x
-     foo => y
+     foo => bar.w
    end
 
    bar {
      state w
-       foo => y
+       foo => riemer
      end
    }
    
-   state y
+   
+   
+   state riemer
      foo => x
    end
 end

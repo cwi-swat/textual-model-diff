@@ -11,6 +11,29 @@ import util::NameGraph;
 import IO;
 import ParseTree;
 
+list[Edit] treeDiffSL(loc v1, loc v2) {
+  str src1 = readFile(v1);
+  str src2 = readFile(v2);
+  Tree pt1 = sl_parse(v1);
+  Tree pt2 = sl_parse(v2);
+  Machine ast1 = sl_implode(pt1);
+  Machine ast2 = sl_implode(pt2);
+  r1 = <{}, {}, {}>;
+  r2 = <{}, {}, {}>;
+  ts1 = slIdClassMap(ast1, r1);
+  ts2 = slIdClassMap(ast2, r2);
+  
+  ia = <isKey, isRef, getId>;
+  
+  matching = <{}, {}, ()>;
+
+  meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
+  
+  ops = diffNodes(ast1@location, ast2@location, [], ast1, ast2, r1, r2, matching, meta, ia);
+  iprintln(ops);
+  return ops;
+}
+
 tuple[list[Edit], map[loc,loc]] diffSL(Machine ast1, Machine ast2) {
   r1 = getNameGraph(setScope(ast1)); 
   r2 = getNameGraph(setScope(ast2));

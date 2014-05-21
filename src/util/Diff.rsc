@@ -111,7 +111,7 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, 
     
     if (node kn := k, isContains(kn, g, ia)) {
       // creates 
-      ops += addInline(myId, path + [f], kn, meta, ia);
+      ops += addInline(myId, path + [f], kn, g, mapping, meta, ia);
     }
     
     if (isList(k)) {
@@ -310,7 +310,7 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
          }
       } 
       
-      else if (node k1n := k1, node k2n := k2, isContains(k1n, ia), isContains(k2n, ia)) {
+      else if (node k1n := k1, node k2n := k2, isContains(k1n, g1, ia), isContains(k2n, g2, ia)) {
         if (classOf(k1n, meta) == classOf(k2n, meta)) {
           changes += diffNodes(id1, id2, path + [field(f1)], k1n, k2n, g1, g2, mapping, meta, ia);
         }

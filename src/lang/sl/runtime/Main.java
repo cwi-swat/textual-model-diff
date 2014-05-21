@@ -76,8 +76,8 @@ public class Main implements Patchable {
 					if (m.currentState == null) {
 						m.init(m.findInitial());
 					}
+					log.setText(boas.toString());
 				}
-				log.setText(boas.toString());
 			}
 		});
 		
@@ -91,7 +91,7 @@ public class Main implements Patchable {
 				} catch (IOException e1) {
 					e1.printStackTrace();
 				}
-				output.setText(w.toString() + ";" + output.getText());
+				output.setText(output.getText() + w.toString() + ";");
 			}
 		});
 		
