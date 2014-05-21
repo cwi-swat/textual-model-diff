@@ -22,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.Timer;
 
 import util.apply.Delta;
 import util.apply.Patchable;
@@ -61,13 +62,12 @@ public class Main implements Patchable {
 		log.setFont(font);
 		JScrollPane logPane = new JScrollPane(log); 
 		log.setEditable(false);
-		JButton update = new JButton("Update");
 		JButton step = new JButton("Step");
 		
-		update.addActionListener(new ActionListener() {
+		Timer poller = new Timer(100, new ActionListener() {
 			
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(ActionEvent arg0) {
 				Delta d = deltaQueue.poll();
 				if (d != null) {
 					status.setText("applying delta");
@@ -103,7 +103,6 @@ public class Main implements Patchable {
 		top.add(eventLabel);
 		top.add(event);
 		top.add(step);
-		top.add(update);
 		panel.add(top, BorderLayout.PAGE_START);
 		panel.add(output, BorderLayout.CENTER);
 		panel.add(logPane, BorderLayout.PAGE_END);
@@ -111,7 +110,9 @@ public class Main implements Patchable {
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setLocation(800, 100);
-		frame.setVisible(true);		
+		frame.setVisible(true);
+		poller.start();
+
 	}
 
 	@Override

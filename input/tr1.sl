@@ -1,6 +1,6 @@
 machine m 
    state x
-     foo => bar.w
+     foo => y
    end
 
    bar {
