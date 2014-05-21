@@ -33,6 +33,32 @@ data Edit
  | create(loc object, Path path, str class)
  ;
 
+str path2str(Path p) {
+  str e2s(PathElement::field(x)) = ".<x>";
+  str e2s(PathElement::index(x)) = "[<x>]";
+  return intercalate("", [ e2s(e) | e <- p ]);
+}
+
+str delta2str(Delta d) {
+   s = "";
+   for (e <- d) {
+     switch (e) {
+       case \set(obj, path, x):
+         s += "obj(<obj>)<path2str(path)> = <x>\n";
+       case \insert(obj, path, x):
+         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+       case remove(obj, path):
+         s += "remove obj(<obj>)<path2str(path)>\n";
+       case create(obj, [], class):
+         s += "obj(<obj>) = new <class>\n";
+       case create(obj, path, class):
+         s += "obj(<obj>)<path2str(path)> = new <class>\n";
+       default:
+         println("Missed: <e>");
+     }
+   }
+   return s;
+}
 
 list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2, 
                    IDMatching mapping, ASTModelMap meta, IDAccess ia) {

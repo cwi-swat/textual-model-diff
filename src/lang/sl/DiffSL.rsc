@@ -66,7 +66,7 @@ tuple[list[Edit], map[loc,loc]] createSL(Machine ast) {
   return <ops, ()>;
 }
 
-void testSL(loc v1, loc v2) {
+Delta testSL(loc v1, loc v2) {
   str src1 = readFile(v1);
   str src2 = readFile(v2);
   Tree pt1 = sl_parse(v1);
@@ -90,7 +90,7 @@ void testSL(loc v1, loc v2) {
   
   ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
 
-  iprintln(ops);
+  return ops;
   
 }
 
