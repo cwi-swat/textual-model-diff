@@ -12,15 +12,11 @@ import IO;
 import ValueIO;
 import Message;
 
-import util::RuntimeDiff;
-
 public str SL_NAME = "State Language"; //language name
 public str SL_EXT  = "sl"; //file extension
 
 public void sl_register()
 {
-  system = requestSystem();
-  runInterpreter(system, "lang.sl.runtime.Main");
   Contribution sl_style =
     categories
     (
@@ -36,34 +32,7 @@ public void sl_register()
 
   set[Contribution] sl_contributions =
   {
-    sl_style,
-    builder(set[Message] ((&T<:Tree) tree) {
-      ast = sl_implode(tree);
-      println("Saving!");
-      prevLoc = tree@\loc[extension="prev"];
-      if (exists(prevLoc)) {
-        println("We have previous version.");
-        prevAst = readTextValueFile(#lang::sl::AST::Machine, prevLoc);
-        <delta, mapping> = diffSL(prevAst, ast);
-        for (d <- delta) {
-          println(d);
-        }
-        iprintln(mapping);
-        println("Sending delta");
-        sendDelta(system, delta, mapping);
-      }
-      else {
-        println("Initial run; creating.");
-        <delta, mapping> = createSL(ast);
-        for (d <- delta) {
-          println(d);
-        }
-        sendDelta(system, delta, mapping);
-      }
-      writeTextValueFile(prevLoc, ast);
-      println("End of save.");
-      return {};
-    })
+    sl_style
   };
 
   registerLanguage(SL_NAME, SL_EXT, lang::sl::Syntax::sl_parse);
