@@ -45,7 +45,7 @@ data Qualifier
 
 data Term 
   = term(Id name, list[Field] fields)
-  | term(Id name, str source, list[Field] fields)
+  | term(Id name, Id source, list[Field] fields)
   ;
 
 data Field 

@@ -28,6 +28,7 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
       }
       return false;
     }
+    println("xn = <xn>; \nyn = <yn>");
     assert false: "BUG: Could not find use in ref graph.";
   }
   else if (node xn := x, node yn := y, ia.isRefId(xn, g1), isDef(yn, g2, ia)) {

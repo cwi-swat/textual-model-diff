@@ -62,8 +62,10 @@ ASTModelMap astModelMap(type[&T<:node] theAdt, str pkg)
 {
   r = {};
   visit (theAdt) {
-    case cons(label(str x, _), flds, _):
-      r += { <x, pkg + "." + capitalize(x), [ f | label(str f, _) <- flds ]> };
+    case cons(label(str x, _), flds, _): {
+      q = (pkg == "") ? "" : (pkg + ".");
+      r += { <x, q + capitalize(x), [ f | label(str f, _) <- flds ]> };
+    }
   }
   return r;
 }

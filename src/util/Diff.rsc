@@ -104,7 +104,7 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, 
 
     // NB: check that kn is the id of the current n
     // otherwise we add references to self.    
-    if (node kn := k, ia.isRefId(kn, g), !isDef(n, g, ia)) {
+    if (node kn := k, ia.isRefId(kn, g) /*, !isDef(n, g, ia) */) {
       // set ref
       if (d2 <- g.refs[ia.getId(kn)]) {
         if (org <- mapping.id, mapping.id[org] == d2) {
