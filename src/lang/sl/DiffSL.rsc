@@ -83,6 +83,11 @@ Delta testSL(loc v1, loc v2) {
   
   ia = <isKey, isRef, getId>;
   
+  println("g1 = ");
+  iprintln(r1);
+  println("g2 = ");
+  iprintln(r2);
+  
   matching = identifyEntities(ast1, ast2, ts1, ts2, r1, r2, ia);
   iprintln(matching);
 

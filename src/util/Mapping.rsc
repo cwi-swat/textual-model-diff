@@ -21,6 +21,11 @@ alias IDAccess = tuple[bool(node, NameGraph) isKeyId, bool(node, NameGraph) isRe
 
 data Null = null();
  
+alias Classes = rel[str cons, str class, list[str] fields];
+
+Classes classify(type[&T<:node] theAdt) = 
+  {  <cons, class, [ f | label(str f, _) <-  flds ]>  
+     | /adt(str class, /cons(label(str x, _), flds, _)) := theAdt };
 
 bool isDef(node n, NameGraph g, IDAccess ia) 
   = any(node k <- getChildren(n), ia.isKeyId(k, g));
@@ -85,8 +90,6 @@ map[str class, Tokens defs] projectEntities(&T<:node t, IDClassMap cm, NameGraph
   
   visit (t) {
     case node n: { 
-      println("Visiting: <n>");
-      println("isKey: <ia.isKeyId(n, g)>");
       if (ia.isKeyId(n, g), x := ia.getId(n), <x, class, _> <- cm) {
         m[class]?EMPTY += [<getName(n), ia.getId(n)>];
       }
@@ -114,7 +117,8 @@ IDMatching match(Tokens src1, Tokens src2) {
   bool eq(Token x, Token y) = x.content == y.content;
  
   mx = lcsMatrix(src1, src2, eq);
-  df = detectMoves(getDiff(mx, src1, src2, size(src1), size(src2), eq));
+  df = getDiff(mx, src1, src2, size(src1), size(src2), eq);
+  df = detectMoves(df);
 
   return <{ l2 | add(<_, l2>, _) <-  df }, 
           { l1 | remove(<_, l1>, _) <- df }, 

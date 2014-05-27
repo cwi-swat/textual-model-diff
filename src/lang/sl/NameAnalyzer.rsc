@@ -153,7 +153,7 @@ public NameGraph getNameGraph(Machine m)
     }
     case Transition t:
     {
-      defs += {t@location};
+      ;//defs += {t@location};
     }
     case Ref r:
     {
