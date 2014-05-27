@@ -27,19 +27,20 @@ lrel[str,str,str, int, int] textStats() {
 
 
 
-lrel[str path,str from,str to, int linesAdded, int linesRemoved, int create, int remove, int \set, int \insert, str msg] tmdiffStats() {
+lrel[str path,str from,str to, int linesAdded, int linesRemoved, int create, int build, int remove, int \set, int \insert, str msg] tmdiffStats() {
   diffs = readTextValueFile(#lrel[str,str,str,str,str, Delta], |project://textual-model-diff/resources/derric.tmdiffs|);
   iprintln(diffs);
   result = [];
   for (<path, from, to, msg, td, diff> <- diffs) {
-     c = [ x | /node x := diff, x is create ];
-     r = [ x | /node x := diff, x is remove ];
-     s = [ x | /node x := diff, x is \set ];
-     i = [ x | /node x := diff, x is \insert ];
+     c = [ x | /Edit x := diff, x is create ];
+     b = [ x | /Edit x := diff, x is build ];
+     r = [ x | /Edit x := diff, x is remove ];
+     s = [ x | /Edit x := diff, x is \set ];
+     i = [ x | /Edit x := diff, x is \insert ];
      <a, d> = countAddDel(td);
      println("MSG = <msg>");
      println(delta2str(diff));
-     result += [<path, from, to, a, d, size(c), size(r), size(s), size(i), msg>];
+     result += [<path, from, to, a, d, size(c), size(b), size(r), size(s), size(i), msg>];
   }
   return result;
 }

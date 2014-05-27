@@ -31,6 +31,7 @@ data Edit
  | \insert(loc object, Path path, loc ref) 
  | remove(loc object, Path path)  
  | create(loc object, Path path, str class)
+ | build(loc object, Path path, node tree)
  ;
 
 str path2str(Path p) {
@@ -49,10 +50,12 @@ str delta2str(Delta d) {
          s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
        case remove(obj, path):
          s += "remove obj(<obj>)<path2str(path)>\n";
-       case create(obj, [], class):
+       case create(obj, [], str class):
          s += "obj(<obj>) = new <class>\n";
-       case create(obj, path, class):
+       case create(obj, path, str class):
          s += "obj(<obj>)<path2str(path)> = new <class>\n";
+       case build(obj, path, node t):
+         s += "obj(<obj>)<path2str(path)> = build <t>\n";
        default:
          println("Missed: <e>");
      }
@@ -85,16 +88,95 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
 
 
 list[Edit] addInline(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
-  ops = addIt(myId, path, n, meta, ia); 
-  ops += initIt(myId, path, n, g, mapping, meta, ia);
+  //ops = addIt(myId, path, n, meta, ia); 
+  ops = initIt(myId, path, n, g, mapping, meta, ia);
   return ops;
 }
 
 list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) 
   = [create(myId, path, classOf(n, meta))];
 
+node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
+  ks = getChildren(n);
+  newKs = [];
+  for (k <- ks) {
+    if (node kn := k, ia.isRefId(kn, g) /*, !isDef(n, g, ia) */) {
+      // set ref
+      if (d2 <- g.refs[ia.getId(kn)]) {
+        if (org <- mapping.id, mapping.id[org] == d2) {
+          newKs += [org];
+        }
+        else {
+          newKs += [d2];
+        }
+      }
+      else {
+        assert false;
+      }
+    }
+    
+    if (node kn := k, isDef(kn, g, ia)) {
+      // set ref
+      d2 = getDefId(kn, g, ia);
+      if (org <- mapping.id, mapping.id[org] == d2) {
+        newKs += [org];
+      }
+      else {
+        newKs += [d2];
+      }
+    }
+    
+    if (isAtom(k, g, ia)) {
+      // set prim
+      newKs += [k];
+    }
+    
+    if (node kn := k, isContains(kn, g, ia)) {
+      newKs += build(kn, g, mapping, meta, ia);
+    }
+    
+    if (isList(k)) {
+      newList = [];
+      if (list[value] xs := k) {
+        for (x <- xs) {
+          if (isAtom(x, g, ia)) {
+            throw "Atoms cannot be in lists";
+          }
+          else if (node xn := x, isContains(x, g, ia)) {
+            newList += [build(xn, g, mapping, meta, ia)];
+          }
+          else if (node xn := x, isDef(xn, g, ia)) {
+            d2 = getDefId(xn, g, ia);
+            if (org <- mapping.id, mapping.id[org] == d2) {
+              newList += [org];
+            }
+            else {
+              newList += [d2];
+            }
+          }
+          else if (node xn := x, ia.isRefId(xn, g)) {
+            u2 = ia.getId(xn);
+            if (d2 <- g.refs[u2]) {
+              if (org <- mapping.id, mapping.id[org] == d2) {
+                newList += [org];
+              }
+              else {
+                newList += [d2];
+              }
+            }
+          }
+        }
+      }
+      newKs += [newList];
+    }
+  }
+  
+  
+  return makeNode(getName(n), newKs);
+}
 
 list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
+  return [build(myId, path, build(n, g, mapping, meta, ia))];
   ops = [];
   ks = getChildren(n);
   i = 0;
@@ -126,7 +208,7 @@ list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, 
         ops += [\insert(myId, path + [f], org)];
       }
       else {
-        ops += [\insert(myId, path + [f], org)];
+        ops += [\insert(myId, path + [f], d2)];
       }
     }
     

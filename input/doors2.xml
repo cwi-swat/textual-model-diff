@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mach>
+  <name attr0="doors" />
+  <list>
+    <state>
+      <name attr0="closed" />
+      <list>
+        <trans attr0="open">
+          <simple attr0="opened" />
+        </trans>
+        <trans attr0="lock">
+          <simple attr0="locked" />
+        </trans>
+      </list>
+    </state>
+    <state>
+      <name attr0="opened" />
+      <list>
+        <trans attr0="close">
+          <simple attr0="closed" />
+        </trans>
+      </list>
+    </state>
+    <state>
+      <name attr0="locked" />
+      <list>
+        <trans attr0="unlock">
+          <simple attr0="closed" />
+        </trans>
+      </list>
+    </state>
+  </list>
+</mach>
+
