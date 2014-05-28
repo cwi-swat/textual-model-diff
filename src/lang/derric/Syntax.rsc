@@ -67,7 +67,7 @@ syntax ContentSpecifier
   ;
 
 syntax ContentModifier 
-  = Id "=" { Specification "+" }+
+  = contentModifier: Id "=" { Specification "+" }+
   ;
 
 syntax Specification 

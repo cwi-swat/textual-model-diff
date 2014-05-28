@@ -13,6 +13,17 @@ import String;
 import List;
 
 
+void showDiff(str file, str v1, str v2) {
+ diffs = readTextValueFile(#lrel[str,str,str,str,str, Delta], |project://textual-model-diff/resources/derric.tmdiffs|);
+ if (<file, v1, v2, str a, str b, d> <- diffs) {
+   println("A =");
+   println(a);
+   println("B =");
+   println(b);
+   println(delta2str(d));
+ }
+}
+
 lrel[str,str,str, int, int] textStats() {
   msgs = readTextValueFile(#rel[str,str,str,str], |project://textual-model-diff/resources/derric.msgs|);
   diffs = readTextValueFile(#rel[str,str,str,str], |project://textual-model-diff/resources/derric.diffs|);

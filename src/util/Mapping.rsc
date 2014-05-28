@@ -90,7 +90,7 @@ map[str class, Tokens defs] projectEntities(&T<:node t, IDClassMap cm, NameGraph
   // Assumption:
   str getName(node id) = x when str x := getChildren(id)[0];
   
-  visit (t) {
+  top-down visit (t) {
     case node n: { 
       if (ia.isKeyId(n, g), x := ia.getId(n), <x, class, _> <- cm) {
         m[class]?EMPTY += [<getName(n), ia.getId(n)>];

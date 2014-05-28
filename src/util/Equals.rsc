@@ -19,13 +19,17 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
     //println("yn = <yn>");
     
     if (d1 <- g1.refs[ia.getId(xn)], d2 <- g2.refs[ia.getId(yn)]) {
-      //println("d1 = <d1>");
-      //println("d2 = <d2>");
-      //println("Mapping");
-      //iprintln(mapping);
       if (d1 in mapping.id) {
-        return mapping.id[d1] == d2;
+        b = mapping.id[d1] == d2;
+        //if (!b) {
+        //  println("d1 != d2");
+        //  println("d1 = <d1>");
+        //  println("d2 = <d2>");
+        //  println("mapping.id[d1] = <mapping.id[d1]>");
+        //}
+        return b;
       }
+      println("new d2 = <d2>");
       return false;
     }
     println("xn = <xn>; \nyn = <yn>");
@@ -72,6 +76,15 @@ bool modelEquals(value x, value y, NameGraph g1, NameGraph g2, IDMatching mappin
   }
   else if (isAtom(x, g1, ia), isAtom(y, g2, ia)) {
     return x == y;
+  }
+  else if (tuple[value,value] xt := x, tuple[value,value] yt := y) {
+    if (!modelEquals(xt[0], yt[0], g1, g2, mapping, ia)) {
+      return false;
+    }
+    if (!modelEquals(xt[1], yt[1], g1, g2, mapping, ia)) {
+      return false;
+    }
+    return true;
   }
   return false;
 }

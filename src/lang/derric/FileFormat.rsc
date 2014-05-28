@@ -66,7 +66,10 @@ data FieldModifier
   ;
 
 data ContentSpecifier 
-= specifier(Id name, list[tuple[str, list[Specification]]] arguments);
+= specifier(Id name, list[ContentModifier] arguments);
+
+data ContentModifier
+  = contentModifier(str name, list[Specification] specs);
 
 data Specification = const(str s)
 	| const(int i)
