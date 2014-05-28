@@ -12,7 +12,7 @@ import util::LCS;
 alias IDClassMap = rel[loc id, str class, node tree];
 alias ASTModelMap = rel[str cons, str class, list[str] features];
 
-alias Token = tuple[str content, loc location];
+alias Token = tuple[str content, str class, loc location];
 alias Tokens = list[Token];
 
 alias IDMatching = tuple[set[loc] added, set[loc] deleted, map[loc, loc] id];
@@ -82,10 +82,9 @@ str featureOf(node n, int i, int arity, ASTModelMap m) =
 str classOf(node n, ASTModelMap m) = class
   when cons := getName(n), <cons, class, _> <- m; 
 
-map[str class, Tokens defs] projectEntities(&T<:node t, IDClassMap cm, NameGraph g, IDAccess ia) {
-  m = ();
+Tokens projectEntities(&T<:node t, IDClassMap cm, NameGraph g, IDAccess ia) {
+  m = [];
   
-  Tokens EMPTY = [];
   
   // Assumption:
   str getName(node id) = x when str x := getChildren(id)[0];
@@ -93,7 +92,7 @@ map[str class, Tokens defs] projectEntities(&T<:node t, IDClassMap cm, NameGraph
   top-down visit (t) {
     case node n: { 
       if (ia.isKeyId(n, g), x := ia.getId(n), <x, class, _> <- cm) {
-        m[class]?EMPTY += [<getName(n), ia.getId(n)>];
+        m += [<getName(n), class, ia.getId(n)>];
       }
     }
   }
@@ -104,7 +103,8 @@ map[str class, Tokens defs] projectEntities(&T<:node t, IDClassMap cm, NameGraph
 IDMatching identifyEntities(node ast1, node ast2, IDClassMap ts1, IDClassMap ts2, NameGraph g1, NameGraph g2,  IDAccess ia) {
   pr1 = projectEntities(ast1, ts1, g1, ia);
   pr2 = projectEntities(ast2, ts2, g2, ia);
-  return ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 );
+  return match(pr1, pr2);
+  //return ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 );
 } 
   
   
@@ -116,16 +116,16 @@ IDMatching merge(IDMatching x, IDMatching y)
 // Assume: src1 and src2 are token seqs of the single same type (e.g. State).
 IDMatching match(Tokens src1, Tokens src2) {
  
-  bool eq(Token x, Token y) = x.content == y.content;
+  bool eq(Token x, Token y) = x.content == y.content && x.class == y.class;
  
   mx = lcsMatrix(src1, src2, eq);
   df = getDiff(mx, src1, src2, size(src1), size(src2), eq);
   //df = detectMoves(df);
 
-  return <{ l2 | add(<_, l2>, _) <-  df }, 
-          { l1 | remove(<_, l1>, _) <- df }, 
-          ( l1: l2 | same(<_, l1>, <_, l2>) <- df ) +
-          ( l1: l2 | move(<_, l1>, <_, l2>, _, _) <- df )>;
+  return <{ l2 | add(<_, _, l2>, _) <-  df }, 
+          { l1 | remove(<_, _, l1>, _) <- df }, 
+          ( l1: l2 | same(<_, _, l1>, <_, _, l2>) <- df ) +
+          ( l1: l2 | move(<_, _, l1>, <_, _, l2>, _, _) <- df )>;
 }
 
 list[Diff[Token]] detectMoves(list[Diff[Token]] edits) {
