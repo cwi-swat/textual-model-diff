@@ -48,7 +48,8 @@ void stats2latex(Stats s) {
       p = "";
     }
     prev = path;
-     
+    from = "\\github{<from>}"; 
+    to = "\\github{<to>}"; 
     println("<p> & <from> & <to> & <linesAdded> & <linesRemoved> & <create> & <delete> & <insT> & <insR> & <remove> & <setP> & <setR> & <setT> & <msg[findFirst(msg, ":") + 1..]>\\\\");
   }
 }
@@ -131,10 +132,13 @@ tuple[int, int] countAddDel(str diff) {
 }
 
 bool isRef(node k, NameGraph g) =
-  ref(_) := k || ref(_, _) := k 
-     || (Specification x := k && x is field) 
-     || term(_) := k
-     || (Id x := k && x@location in g.uses); 
+  ref1(_) := k || ref2(_, _) := k 
+  || lengthOf1(_) := k || lengthOf2(_, _) := k 
+  || offset1(_) := k || offset2(_, _) := k 
+  || (Specification x := k && x is field7) 
+  || (Specification x := k && x is field8) 
+  || term0(_) := k
+  || (Id x := k && x@location in g.uses); 
 
 bool isKey(node k, NameGraph g) = 
   Id x := k && x@location in g.defs;
@@ -144,11 +148,16 @@ bool isKey(node k, NameGraph g) =
 anno loc node@location;
 loc getId(node k) {
   if (Id x := k) return x@location;
-  if (x:ref(_) := k) return x@location;
-  if (x:ref(_, _) := k) return x@location;
-  if (x:field(_) := k) return x@location;
-  if (x:field(_, _) := k) return x@location;
-  if (x:DSymbol::term(_) := k) return x@location;
+  if (x:ref1(_) := k) return x@location;
+  if (x:ref2(_, _) := k) return x@location;
+  if (x:lengthOf1(_) := k) return x@location;
+  if (x:lengthOf2(_, _) := k) return x@location;
+  if (x:offset1(_) := k) return x@location;
+  if (x:offset2(_, _) := k) return x@location;
+  if (x:field7(_) := k) return x@location;
+  if (x:field8(_, _) := k) return x@location;
+  if (x:DSymbol::term0(_) := k) return x@location;
+  throw "Missed: <k>";
 }
 
 IDClassMap derricIdClassMap(FileFormat f, NameGraph g) {

@@ -52,27 +52,43 @@ str path2str(Path p) {
 }
 
 str delta2str(Delta d) {
+   ids = ();
+   i = 0;
+   for (/loc l := d) {
+      if (l notin ids) {
+        ids[l] = i;
+        i += 1;
+      }
+   } 
+   
+   node subst(node n) {
+     return visit (delAnnotationsRec(n)) {
+       case value x => "d<ids[obj]>"
+         when loc obj := x
+     }
+   }
+
    s = "";
    for (e <- d) {
      switch (e) {
        case \setPrim(obj, path, x):
-         s += "obj(<obj>)<path2str(path)> = <x>\n";
+         s += "d<ids[obj]><path2str(path)> = <x>\n";
        case \setRef(obj, path, x):
-         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+         s += "d<ids[obj]><path2str(path)> = d<ids[x]>\n";
        case setTree(obj, path, node t):
-         s += "obj(<obj>)<path2str(path)> = build <t>\n";
+         s += "d<ids[obj]><path2str(path)> = <subst(t)>\n";
        case \insertRef(obj, path, x):
-         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+         s += "d<ids[obj]><path2str(path)> = d<ids[x]>\n";
        case \insertPrim(obj, path, x):
-         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+         s += "d<ids[obj]><path2str(path)> = d<ids[x]>\n";
        case \insertTree(obj, path, x):
-         s += "obj(<obj>)<path2str(path)> = build <x>\n";
+         s += "d<ids[obj]><path2str(path)> = <subst(x)>\n";
        case remove(obj, path):
-         s += "remove obj(<obj>)<path2str(path)>\n";
+         s += "remove d<ids[obj]><path2str(path)>\n";
        case create(obj, str class):
-         s += "obj(<obj>) = new <class>\n";
+         s += "create <class> d<ids[obj]>\n";
        case delete(obj):
-         s += "delete obj(<obj>)\n";
+         s += "delete d<ids[obj]>\n";
        default:
          println("Missed: <e>");
      }

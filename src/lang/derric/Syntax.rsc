@@ -30,7 +30,7 @@ syntax DSymbol
   | right not: "!" DSymbol
   > iter: DSymbol "*"
   | optional: DSymbol "?"
-  | term: Id
+  | term0: Id
   ;
 
 syntax Qualifier 

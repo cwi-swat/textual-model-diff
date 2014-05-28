@@ -36,17 +36,17 @@ rel[str, loc, str, loc] enrichByInheritance(rel[str, loc, str, loc] structs, rel
 }
 
 rel[loc, loc] inheritance(FileFormat f, rel[str, loc, str, loc] structs)
-  = { <sub, sup> | /term(id(x), id(y), _) := f,
+  = { <sub, sup> | /term2(id(x), id(y), _) := f,
        <x, sub, _, _> <- structs, <y, sup, _, _> <- structs };
        
 
 
 rel[loc,loc] resolveInheritance(FileFormat f, rel[str, loc, str, loc] structs) 
-  = { <super@location, decl> | /term(x, super:id(str n), _) := f,
+  = { <super@location, decl> | /term2(x, super:id(str n), _) := f,
        <n, loc decl, _, _> <- structs };
 
 rel[loc,loc] resolveSequence(FileFormat f, rel[str, loc, str, loc] structs)
-  =  { <t@location, decl> | /t:term(x:id(n)) := f.sequence,
+  =  { <t@location, decl> | /t:term0(x:id(n)) := f.sequence,
          <n, loc decl, _, _> <- structs  };
   
   
@@ -65,7 +65,22 @@ rel[loc,loc] resolveFields(FileFormat frm, rel[str, loc, str, loc] structs) {
      + { <r@location, decl> | /r:ref2(q:id(n1), x:id(n2)) := f, 
             <n1, _, n2, loc decl> <- structs }
      + { <r@location, decl> | /r:ref2(q:id(n1), x:id(n2)) := f, 
+            <n1, loc decl, _, _> <- structs }
+
+     + { <r@location, decl> | /r:lengthOf1(x:id(n)) := f, 
+            <struct, _, n, loc decl> <- structs }
+     + { <r@location, decl> | /r:lengthOf2(q:id(n1), x:id(n2)) := f, 
+            <n1, _, n2, loc decl> <- structs }
+     + { <r@location, decl> | /r:lengthOf2(q:id(n1), x:id(n2)) := f, 
+            <n1, loc decl, _, _> <- structs }
+
+     + { <r@location, decl> | /r:offset1(x:id(n)) := f, 
+            <struct, _, n, loc decl> <- structs }
+     + { <r@location, decl> | /r:offset2(q:id(n1), x:id(n2)) := f, 
+            <n1, _, n2, loc decl> <- structs }
+     + { <r@location, decl> | /r:offset2(q:id(n1), x:id(n2)) := f, 
             <n1, loc decl, _, _> <- structs };
+
 
    return ( {}| it + resolveField(t.name.name, f) | Term t <- frm.terms, Field f <- t.fields);
 } 

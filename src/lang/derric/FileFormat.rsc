@@ -26,7 +26,7 @@ data FileFormat
        list[Term] terms);
 
 data DSymbol 
-  = term(Id name)
+  = term0(Id name)
   | optional(DSymbol symbol)
   | iter(DSymbol symbol)
   | not(DSymbol symbol)
