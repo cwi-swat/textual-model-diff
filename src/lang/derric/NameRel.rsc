@@ -52,19 +52,19 @@ rel[loc,loc] resolveSequence(FileFormat f, rel[str, loc, str, loc] structs)
   
 rel[loc,loc] resolveFields(FileFormat frm, rel[str, loc, str, loc] structs) {
    rel[loc,loc] resolveField(str struct, Field f) 
-     = { <fl@location, decl> | /fl:field(x:id(n)) := f, 
+     = { <fl@location, decl> | /fl:field7(x:id(n)) := f, 
             <struct, _, n , loc decl> <- structs }
-     + { <fl@location, decl> | /fl:field(q:id(n1), x:id(n2)) := f, 
+     + { <fl@location, decl> | /fl:field8(q:id(n1), x:id(n2)) := f, 
             <n1, _, n2, loc decl> <- structs }
-     + { <fl@location, decl> | /fl:field(q:id(n1), x:id(n2)) := f, 
+     + { <fl@location, decl> | /fl:field8(q:id(n1), x:id(n2)) := f, 
             <n1, loc decl, _, _> <- structs }
             
      // unfortunate duplication...
-     + { <r@location, decl> | /r:ref(x:id(n)) := f, 
+     + { <r@location, decl> | /r:ref1(x:id(n)) := f, 
             <struct, _, n, loc decl> <- structs }
-     + { <r@location, decl> | /r:ref(q:id(n1), x:id(n2)) := f, 
+     + { <r@location, decl> | /r:ref2(q:id(n1), x:id(n2)) := f, 
             <n1, _, n2, loc decl> <- structs }
-     + { <r@location, decl> | /r:ref(q:id(n1), x:id(n2)) := f, 
+     + { <r@location, decl> | /r:ref2(q:id(n1), x:id(n2)) := f, 
             <n1, loc decl, _, _> <- structs };
 
    return ( {}| it + resolveField(t.name.name, f) | Term t <- frm.terms, Field f <- t.fields);

@@ -26,13 +26,24 @@ data PathElement
   | index(int index)
   ;
 
-data Edit 
- = \set(loc object, Path path, value x)
- | \insert(loc object, Path path, loc ref) 
- | remove(loc object, Path path)  
- | create(loc object, Path path, str class)
- | build(loc object, Path path, node tree)
- ;
+data Edit
+  = create(loc object, str class)
+  | delete(loc object)
+  | insertRef(loc object, Path path, loc ref)
+  | insertTree(loc object, Path path, node tree)
+  | remove(loc object, Path path)
+  | setPrim(loc object, Path path, value x)
+  | setRef(loc object, Path path, loc ref)
+  | setTree(loc object, Path path, node tree)
+  ;
+
+//data EditOld 
+// = \set(loc object, Path path, value x)
+// | \insert(loc object, Path path, loc ref) 
+// | remove(loc object, Path path)  
+// | create(loc object, Path path, str class)
+// | build(loc object, Path path, node tree)
+// ;
 
 str path2str(Path p) {
   str e2s(PathElement::field(x)) = ".<x>";
@@ -44,18 +55,24 @@ str delta2str(Delta d) {
    s = "";
    for (e <- d) {
      switch (e) {
-       case \set(obj, path, x):
+       case \setPrim(obj, path, x):
          s += "obj(<obj>)<path2str(path)> = <x>\n";
-       case \insert(obj, path, x):
+       case \setRef(obj, path, x):
          s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+       case setTree(obj, path, node t):
+         s += "obj(<obj>)<path2str(path)> = build <t>\n";
+       case \insertRef(obj, path, x):
+         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+       case \insertPrim(obj, path, x):
+         s += "obj(<obj>)<path2str(path)> = obj(<x>)\n";
+       case \insertTree(obj, path, x):
+         s += "obj(<obj>)<path2str(path)> = build <x>\n";
        case remove(obj, path):
          s += "remove obj(<obj>)<path2str(path)>\n";
-       case create(obj, [], str class):
+       case create(obj, str class):
          s += "obj(<obj>) = new <class>\n";
-       case create(obj, path, str class):
-         s += "obj(<obj>)<path2str(path)> = new <class>\n";
-       case build(obj, path, node t):
-         s += "obj(<obj>)<path2str(path)> = build <t>\n";
+       case delete(obj):
+         s += "delete obj(<obj>)\n";
        default:
          println("Missed: <e>");
      }
@@ -72,7 +89,7 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
     ops += addIt(l2, [], n2, meta, ia);
   
   for (<loc l2, _, node n2> <- r2,  l2 notin mapping.id<1>)
-    ops += initIt(l2, [], n2, g2, mapping, meta, ia);
+    ops += [setTree(l2, [], build(n2, g2, mapping, meta, ia))];
 
   for (<loc l1, _, node n1> <- r1, l1 in mapping.id) {
     l2 = mapping.id[l1];
@@ -87,14 +104,14 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
 }
 
 
-list[Edit] addInline(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
-  //ops = addIt(myId, path, n, meta, ia); 
-  ops = initIt(myId, path, n, g, mapping, meta, ia);
-  return ops;
-}
+//list[Edit] addInline(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
+//  //ops = addIt(myId, path, n, meta, ia); 
+//  ops = initIt(myId, path, n, g, mapping, meta, ia);
+//  return ops;
+//}
 
 list[Edit] addIt(loc myId, Path path, node n, ASTModelMap meta, IDAccess ia) 
-  = [create(myId, path, classOf(n, meta))];
+  = [create(myId, classOf(n, meta))];
 
 node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
   ks = getChildren(n);
@@ -136,7 +153,7 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
     }
     
     if (isList(k)) {
-      newList = [];
+      list[value] newList = [];
       if (list[value] xs := k) {
         for (x <- xs) {
           if (isAtom(x, g, ia)) {
@@ -165,6 +182,12 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
               }
             }
           }
+          else if (tuple[value,value] xt := x) {
+            newList += [build("tuple"(xt[0], xt[1]), g, mapping, meta, ia)];
+          }
+          else {
+            throw "Unsupported: <x>";
+          }
         }
       }
       newKs += [newList];
@@ -175,99 +198,99 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
   return makeNode(getName(n), newKs);
 }
 
-list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
-  return [build(myId, path, build(n, g, mapping, meta, ia))];
-  ops = [];
-  ks = getChildren(n);
-  i = 0;
-  for (value k <- ks) {
-    f = field(featureOf(n, i, size(ks), meta));
-    //println("<f> = <k>");
-
-    // NB: check that kn is the id of the current n
-    // otherwise we add references to self.    
-    if (node kn := k, ia.isRefId(kn, g) /*, !isDef(n, g, ia) */) {
-      // set ref
-      if (d2 <- g.refs[ia.getId(kn)]) {
-        if (org <- mapping.id, mapping.id[org] == d2) {
-          ops += [\insert(myId, path + [f], org)];
-        }
-        else {
-          ops += [\insert(myId, path + [f], d2)];
-        }
-      }
-      else {
-        assert false;
-      }
-    }
-    
-    if (node kn := k, isDef(kn, g, ia)) {
-      // set ref
-      d2 = getDefId(kn, g, ia);
-      if (org <- mapping.id, mapping.id[org] == d2) {
-        ops += [\insert(myId, path + [f], org)];
-      }
-      else {
-        ops += [\insert(myId, path + [f], d2)];
-      }
-    }
-    
-    if (isAtom(k, g, ia)) {
-      // set prim
-      ops += [\set(myId, path + [f], k)];
-    }
-    
-    if (node kn := k, isContains(kn, g, ia)) {
-      // creates 
-      ops += addInline(myId, path + [f], kn, g, mapping, meta, ia);
-    }
-    
-    if (isList(k)) {
-      if (list[value] xs := k) {
-        j = 0;
-        for (x <- xs) {
-          if (isAtom(x, g, ia)) {
-            throw "Atoms cannot be in lists";
-          }
-          else if (node xn := x, isContains(x, g, ia)) {
-            ops += addInline(myId, path + [f, index(j)], xn, g, mapping, meta, ia);
-          }
-          else if (node xn := x, isDef(xn, g, ia)) {
-            d2 = getDefId(xn, g, ia);
-            if (org <- mapping.id, mapping.id[org] == d2) {
-              ops += [\insert(myId, path + [f, index(j)], org)];
-            }
-            else {
-              ops += [\insert(myId, path + [f, index(j)], d2)];
-            }
-          }
-          else if (node xn := x, ia.isRefId(xn, g)) {
-            u2 = ia.getId(xn);
-            if (d2 <- g.refs[u2]) {
-              if (org <- mapping.id, mapping.id[org] == d2) {
-                ops += [\insert(myId, path + [f, index(j)], org)];
-              }
-              else {
-                ops += [\insert(myId, path + [f, index(j)], org)];
-              }
-            }
-            
-          }
-          j += 1;
-        }
-      }
-    }
-    i += 1;
-  }
-  return ops;
-}
+//list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
+//  //return [set{ri(myId, path, build(n, g, mapping, meta, ia))];
+//  ops = [];
+//  ks = getChildren(n);
+//  i = 0;
+//  for (value k <- ks) {
+//    f = field(featureOf(n, i, size(ks), meta));
+//    //println("<f> = <k>");
+//
+//    // NB: check that kn is the id of the current n
+//    // otherwise we add references to self.    
+//    if (node kn := k, ia.isRefId(kn, g) /*, !isDef(n, g, ia) */) {
+//      // set ref
+//      if (d2 <- g.refs[ia.getId(kn)]) {
+//        if (org <- mapping.id, mapping.id[org] == d2) {
+//          ops += [\insert(myId, path + [f], org)];
+//        }
+//        else {
+//          ops += [\insert(myId, path + [f], d2)];
+//        }
+//      }
+//      else {
+//        assert false;
+//      }
+//    }
+//    
+//    if (node kn := k, isDef(kn, g, ia)) {
+//      // set ref
+//      d2 = getDefId(kn, g, ia);
+//      if (org <- mapping.id, mapping.id[org] == d2) {
+//        ops += [\insert(myId, path + [f], org)];
+//      }
+//      else {
+//        ops += [\insert(myId, path + [f], d2)];
+//      }
+//    }
+//    
+//    if (isAtom(k, g, ia)) {
+//      // set prim
+//      ops += [\set(myId, path + [f], k)];
+//    }
+//    
+//    if (node kn := k, isContains(kn, g, ia)) {
+//      // creates 
+//      ops += addInline(myId, path + [f], kn, g, mapping, meta, ia);
+//    }
+//    
+//    if (isList(k)) {
+//      if (list[value] xs := k) {
+//        j = 0;
+//        for (x <- xs) {
+//          if (isAtom(x, g, ia)) {
+//            throw "Atoms cannot be in lists";
+//          }
+//          else if (node xn := x, isContains(x, g, ia)) {
+//            ops += addInline(myId, path + [f, index(j)], xn, g, mapping, meta, ia);
+//          }
+//          else if (node xn := x, isDef(xn, g, ia)) {
+//            d2 = getDefId(xn, g, ia);
+//            if (org <- mapping.id, mapping.id[org] == d2) {
+//              ops += [\insert(myId, path + [f, index(j)], org)];
+//            }
+//            else {
+//              ops += [\insert(myId, path + [f, index(j)], d2)];
+//            }
+//          }
+//          else if (node xn := x, ia.isRefId(xn, g)) {
+//            u2 = ia.getId(xn);
+//            if (d2 <- g.refs[u2]) {
+//              if (org <- mapping.id, mapping.id[org] == d2) {
+//                ops += [\insert(myId, path + [f, index(j)], org)];
+//              }
+//              else {
+//                ops += [\insert(myId, path + [f, index(j)], org)];
+//              }
+//            }
+//            
+//          }
+//          j += 1;
+//        }
+//      }
+//    }
+//    i += 1;
+//  }
+//  return ops;
+//}
 
 list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
        NameGraph g1, NameGraph g2, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
        
     assert classOf(n1, meta) == classOf(n2, meta);
 
-    changes = [];
+    list[Edit] changes = [];
     
      
     cs1 = getChildren(n1);
@@ -281,43 +304,48 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
       
     fs1 = featuresOf(n1, size(cs1), meta);
     fs2 = featuresOf(n2, size(cs2), meta);
-    csr1 = { <fs1[j], cs1[j]> | j <- [0..size(fs1)] };
-    csr2 = { <fs2[j], cs2[j]> | j <- [0..size(fs2)] };
+    csr1 = [ <fs1[j], cs1[j]> | j <- [0..size(fs1)] ];
+    csr2 = [ <fs2[j], cs2[j]> | j <- [0..size(fs2)] ];
       
     csr = outerJoin(csr1, csr2, null());
       
     for (<str f1, value k1, str f2, value k2> <- csr)  {
+      assert f1 == f2;
+      //println("f1 <f1> = <k1>");
+      //println("f2 <f2> = <k2>");
+      //
     
       if (node k1n := k1, node k2n := k2, ia.isRefId(k1n, g1), ia.isRefId(k2n, g2)) {
         if (d1 <- g1.refs[ia.getId(k1n)], d2 <- g2.refs[ia.getId(k2n)],
             d1 in mapping.id ==> mapping.id[d1] != d2) {
           if (org <- mapping.id, mapping.id[org] == d2) {
             // always update to old id if possible
-            changes += [\insert(id1, path + [field(f1)], org)];
+            changes += [setRef(id1, path + [field(f1)], org)];
           }
           else {
-            changes += [\insert(id1, path + [field(f1)], d2)];
+            changes += [setRef(id1, path + [field(f1)], d2)];
           }
         } 
       } 
       
       else if (isAtom(k1, g1, ia), isAtom(k2, g2, ia)) {
         if (k1 != k2) {
-          changes += [\set(id2, path + [field(f1)], k2)];
+          changes += [\setPrim(id2, path + [field(f1)], k2)];
         }
       }
       
       else if (node k1n := k1, node k2n := k2, ia.isRefId(k1n, g1), isContains(k2n, g2, ia)) {
-        changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
+        //changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
+        changes += [setTree(id1, path + [field(f1)], build(k2n, g2, mapping, meta, ia))];
       } 
       
       else if (node k1n := k1, node k2n := k2, isContains(k1n, g1, ia), ia.isRefId(k2n, g2)) {
         if (d2 <- g2.refs[ia.getId(k2n)]) {
           if (org <- mapping.id, mapping.id[org] == d2) {
-            changes += [\insert(id1, path + [field(f1)], org)];
+            changes += [setRef(id1, path + [field(f1)], org)];
           }
           else {
-            changes += [\insert(id1, path + [field(f1)], d2)];
+            changes += [setRef(id1, path + [field(f1)], d2)];
           }
         }
         else {
@@ -329,10 +357,10 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
         if (mapping.id[getDefId(k1n, g1, ia)] != getDefId(k2n, g2, ia)) {
           d2 = getDefId(k2n, g2, ia);
           if (org <- mapping.id, mapping.id[org] == d2) {
-            changes += [\insert(id1, path + [field(f1)], org)];
+            changes += [setRef(id1, path + [field(f1)], org)];
           }
           else {
-            changes += [\insert(id1, path + [field(f1)], d2)];
+            changes += [setRef(id1, path + [field(f1)], d2)];
           }
         }
       }
@@ -343,10 +371,10 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
         if (d2 <- g2.refs[ia.getId(k2n)]) {
           if (mapping.id[getDefId(k1n, g1, ia)] != d2) {
             if (org <- mapping.id, mapping[org] == d2) {
-              changes += [\insert(id1, path + [field(f1)], org)];
+              changes += [setRef(id1, path + [field(f1)], org)];
             }
             else {
-              changes += [\insert(id1, path + [field(f1)], d2)];
+              changes += [setRef(id1, path + [field(f1)], d2)];
             }
           }
         }
@@ -361,10 +389,10 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
         d2 = getDefId(k2n, g2, ia);
         if (mapping.id[g1.refs[ia.getId(k1n)]] != d2) {
           if (org <- mapping.id, mapping.id[org] == d2) { 
-            changes += [\insert(id1, path + [field(f1)], org)];
+            changes += [setRef(id1, path + [field(f1)], org)];
           }
           else {
-            changes += [\insert(id1, path + [field(f1)], d2)];
+            changes += [setRef(id1, path + [field(f1)], d2)];
           }
         }
       }
@@ -390,25 +418,26 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
                if (node an := a, isDef(an, g2, ia)) {
                  d2 = getDefId(an, g2, ia);
                  if (org <- mapping.id, mapping.id[org] == d2) {
-                   changes += [\insert(id1, p, org)];
+                   changes += [insertRef(id1, p, org)];
                  }
                  else {
-                   changes += [\insert(id1, p, d2)];
+                   changes += [insertRef(id1, p, d2)];
                  }
                }
                else if (node an := a, ia.isRefId(an, g2)) {
                  u2 = ia.getId(an);
                  if (d2 <- g2.refs[u2]) {
                    if (org <- mapping.id, mapping.id[org] == d2) {
-                     changes += [\insert(id1, p, org)];
+                     changes += [insertRef(id1, p, org)];
                    }
                    else {
-                     changes += [\insert(id1, p, d2)];
+                     changes += [insertRef(id1, p, d2)];
                    }
                  }
                }
                else if (node an := a, isContains(an, g2, ia)) {
-                 changes += addInline(id1, p, an, g2, mapping, meta, ia);
+                 //changes += addInline(id1, p, an, g2, mapping, meta, ia);
+                 changes += insertTree(id1, p, build(an, g2, mapping, meta, ia));
                }
                else {
                  assert false: "unsupported list element";
@@ -426,7 +455,8 @@ list[Edit] diffNodes(loc id1, loc id2, Path path, node n1, node n2,
           // What if k1n contains defs???
           // should we do remove here? delete? or neither (i.e. let add override)?
           //changes += deleteIt(id1, path + [field(f1)], k1n, meta, ia);
-          changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
+          //changes += addInline(id1, path + [field(f1)], k2n, mapping, meta, ia);
+          changes += setTree(id1, path + [field(f1)], build(k2n, g2, mapping, meta, ia));
         }
       } 
       else {
@@ -446,10 +476,10 @@ list[Diff[value]] diffLists(list[value] xs, list[value] ys,
   return getDiff(mx, xs, ys, size(xs), size(ys), eq);
 }
 
-rel[&T, &U, &T, &U] outerJoin(rel[&T, &U] r1, rel[&T, &U] r2, &U null) {
-  r = { <f1, k1, f1, k2> | <&T f1, &U k1> <- r1, <f1, value k2> <- r2 };
-  r += { <f1, k1, f1, null> | <&T f1, &U k1> <- r1, f1 notin r2<0> };
-  r += { <f2, null, f2, k2> | <&T f2, &U k2> <- r2, f2 notin r1<0> };
+lrel[&T, &U, &T, &U] outerJoin(lrel[&T, &U] r1, lrel[&T, &U] r2, &U null) {
+  r = [ <f1, k1, f1, k2> | <&T f1, &U k1> <- r1, <f1, value k2> <- r2 ];
+  r += [ <f1, k1, f1, null> | <&T f1, &U k1> <- r1, f1 notin r2<0> ];
+  r += [ <f2, null, f2, k2> | <&T f2, &U k2> <- r2, f2 notin r1<0> ];
   return r;
 } 
     

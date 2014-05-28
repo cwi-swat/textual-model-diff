@@ -30,7 +30,7 @@ data DSymbol
   | optional(DSymbol symbol)
   | iter(DSymbol symbol)
   | not(DSymbol symbol)
-  | anyOf(set[DSymbol] symbols)
+  | anyOf(list[DSymbol] symbols)
   | seq(list[DSymbol] sequence)
   ;
 
@@ -44,18 +44,18 @@ data Qualifier
   ;
 
 data Term 
-  = term(Id name, list[Field] fields)
-  | term(Id name, Id source, list[Field] fields)
+  = term1(Id name, list[Field] fields)
+  | term2(Id name, Id source, list[Field] fields)
   ;
 
 data Field 
-  =  field(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, list[Expression] specifications)
-   | field(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, Expression specification)
-   | field(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, ContentSpecifier specifier)
-   | field(Id name, list[Field] fields)
+  =  field1(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, list[Expression] specifications)
+   | field2(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, Expression specification)
+   | field3(Id name, list[Modifier] modifiers, list[Qualifier] qualifiers, ContentSpecifier specifier)
+   | field4(Id name, list[Field] fields)
    // Normalize these to the above
-   | field(Id name, list[FieldModifier] fmodifiers)
-   | field(Id name)
+   | field5(Id name, list[FieldModifier] fmodifiers)
+   | field6(Id name)
    ;
    
 data FieldModifier
@@ -70,8 +70,8 @@ data ContentSpecifier
 
 data Specification = const(str s)
 	| const(int i)
-    | field(Id name)
-    | field(Id struct, Id name)
+    | field7(Id name)
+    | field8(Id struct, Id name)
     | string(str s)
     | number(str n)
     ;
@@ -85,20 +85,20 @@ data Modifier
 	;
 
 data Expression 
-    = ref(Id name)
-    | ref(Id struct, Id name)
+    = ref1(Id name)
+    | ref2(Id struct, Id name)
 	| not(Expression exp)
 	| pow(Expression base, Expression exp)
 	| minus(Expression lhs, Expression rhs)
 	| times(Expression lhs, Expression rhs)
 	| add(Expression lhs, Expression rhs)
 	| divide(Expression lhs, Expression rhs)
-	| \value(int i)
-	| \value(str s)
-	| lengthOf(Id name)
-	| lengthOf(Id struct, Id name)
-	| offset(Id name)
-	| offset(Id struct, Id name)
+	| \value1(int i)
+	| \value2(str s)
+	| lengthOf1(Id name)
+	| lengthOf2(Id struct, Id name)
+	| offset1(Id name)
+	| offset2(Id struct, Id name)
 	| or(Expression lhs, Expression rhs)
 	| range(Expression from, Expression to)
 	| negate(Expression exp)

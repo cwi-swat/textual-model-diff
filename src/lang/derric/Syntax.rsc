@@ -43,14 +43,14 @@ syntax Qualifier
   ;
 
 syntax Term
-   = @Foldable term: Id name "{" Field* fields "}"
-   | @Foldable term: Id name "=" Id super "{" Field* fields "}"
+   = @Foldable term1: Id name "{" Field* fields "}"
+   | @Foldable term2: Id name "=" Id super "{" Field* fields "}"
    ;
    
 syntax Field 
-  = field: Id name ":" FieldModifier* modifiers ";"
-  | field: Id name ";"
-  | field: Id name ":" "{" Field* fields "}"
+  = field5: Id name ":" FieldModifier* modifiers ";"
+  | field6: Id name ";"
+  | field4: Id name ":" "{" Field* fields "}"
   ;
 
 syntax FieldModifier
@@ -73,8 +73,8 @@ syntax ContentModifier
 syntax Specification 
   = string: String // normalize to const(int/str)
   | number: Number
-  | field: Id name
-  | field: Id struct "." Id name
+  | field7: Id name
+  | field8: Id struct "." Id name
   ;
 
 syntax Modifier 
@@ -111,13 +111,13 @@ lexical CommentChar = ![*] | [*] !>> [/];
 
 syntax Expression = number: Number
                   | string: String
-                  | ref: ExpressionId
-                  | ref: ExpressionId "." ExpressionId
+                  | ref1: ExpressionId
+                  | ref2: ExpressionId "." ExpressionId
                   | bracket "(" Expression ")"
-                  | offset: "offset" "(" ExpressionId ")"
-                  | offset: "offset" "(" ExpressionId "." ExpressionId ")"
-                  | lengthOf: "lengthOf" "(" ExpressionId ")"
-                  | lengthOf: "lengthOf" "(" ExpressionId "." ExpressionId ")"
+                  | offset1: "offset" "(" ExpressionId ")"
+                  | offset2: "offset" "(" ExpressionId "." ExpressionId ")"
+                  | lengthOf1: "lengthOf" "(" ExpressionId ")"
+                  | lengthOf2: "lengthOf" "(" ExpressionId "." ExpressionId ")"
                   | negate: "-" Expression
                   | not: "!" Expression 
                   > left pow: Expression "^" Expression

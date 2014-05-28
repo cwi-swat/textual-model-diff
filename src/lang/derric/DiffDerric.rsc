@@ -25,22 +25,41 @@ lrel[str,str,str, int, int] textStats() {
   return r;
 }
 
+alias Stats
+  = lrel[str path,str from,str to, int linesAdded, int linesRemoved, int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, str msg];
+  
 
+void stats2latex(Stats s) {
+  prev = "";
+  for (<str path,str from,str to, int linesAdded, int linesRemoved, int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, str msg> <- s) {
+    p = "\\textbf{<path[findFirst(path, "/") + 1..]>}";
+    if (path == prev) {
+      p = "";
+    }
+    prev = path;
+     
+    println("<p> & <from> & <to> & <linesAdded> & <linesRemoved> & <create> & <delete> & <insT> & <insR> & <remove> & <setP> & <setR> & <setT> & <msg[findFirst(msg, ":") + 1..]>\\\\");
+  }
+}
 
-lrel[str path,str from,str to, int linesAdded, int linesRemoved, int create, int build, int remove, int \set, int \insert, str msg] tmdiffStats() {
+Stats tmdiffStats() {
   diffs = readTextValueFile(#lrel[str,str,str,str,str, Delta], |project://textual-model-diff/resources/derric.tmdiffs|);
   iprintln(diffs);
   result = [];
   for (<path, from, to, msg, td, diff> <- diffs) {
      c = [ x | /Edit x := diff, x is create ];
-     b = [ x | /Edit x := diff, x is build ];
+     d = [ x | /Edit x := diff, x is delete ];
+     insT = [ x | /Edit x := diff, x is insertTree ];
+     insR = [ x | /Edit x := diff, x is insertRef ];
      r = [ x | /Edit x := diff, x is remove ];
-     s = [ x | /Edit x := diff, x is \set ];
-     i = [ x | /Edit x := diff, x is \insert ];
-     <a, d> = countAddDel(td);
+     setP = [ x | /Edit x := diff, x is setPrim ];
+     setR = [ x | /Edit x := diff, x is setRef ];
+     setT = [ x | /Edit x := diff, x is setTree ];
+     
+     <ad, de> = countAddDel(td);
      println("MSG = <msg>");
      println(delta2str(diff));
-     result += [<path, from, to, a, d, size(c), size(b), size(r), size(s), size(i), msg>];
+     result += [<path, from, to, ad, de, size(c), size(d), size(insT), size(insR), size(r), size(setP), size(setR), size(setT), msg>];
   }
   return result;
 }

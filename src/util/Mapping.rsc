@@ -120,7 +120,7 @@ IDMatching match(Tokens src1, Tokens src2) {
  
   mx = lcsMatrix(src1, src2, eq);
   df = getDiff(mx, src1, src2, size(src1), size(src2), eq);
-  df = detectMoves(df);
+  //df = detectMoves(df);
 
   return <{ l2 | add(<_, l2>, _) <-  df }, 
           { l1 | remove(<_, l1>, _) <- df }, 
