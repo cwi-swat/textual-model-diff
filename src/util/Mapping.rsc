@@ -107,7 +107,39 @@ IDMatching identifyEntities(node ast1, node ast2, IDClassMap ts1, IDClassMap ts2
   //return ( <{}, {}, ()> | merge(it, match(pr1[k], pr2[k])) | k <- pr1, k in pr2 );
 } 
   
-  
+
+tuple[set[int], set[int]] splitDiff(str diff) {
+  set[int] del = {};
+  set[int] add = {};
+  lines = split("\n", diff);
+  println("lines = <lines>");
+  i = 0;
+  while (i < size(lines)) {
+    l = lines[i];
+    println("Line = <l>");
+    if (/^@@ -<l1:[0-9]*>,?[0-9]* \+<l2:[0-9]*>,?[0-9]* @@/ := l) {
+      println("Match!");
+      i += 1;
+      doff = 0;
+      aoff = 0;
+      while (i < size(lines) && (startsWith(lines[i], "-") || startsWith(lines[i], "+"))) {
+        l = lines[i];
+        if (startsWith(l, "-")) {
+          del += {toInt(l1) + doff};
+          doff += 1;
+        }
+        if (startsWith(l, "+")) {
+          add += {toInt(l2) + aoff};
+          aoff += 1;
+        }
+        i += 1;
+      }
+      continue;
+    }
+    i += 1;
+  } 
+  return <del, add>;     
+}
 
 
 IDMatching merge(IDMatching x, IDMatching y) 
@@ -121,6 +153,11 @@ IDMatching match(Tokens src1, Tokens src2) {
   mx = lcsMatrix(src1, src2, eq);
   df = getDiff(mx, src1, src2, size(src1), size(src2), eq);
   //df = detectMoves(df);
+
+  //iprintln(src1);
+  //iprintln(src2);
+  //iprintln(df);
+  
 
   return <{ l2 | add(<_, _, l2>, _) <-  df }, 
           { l1 | remove(<_, _, l1>, _) <- df }, 

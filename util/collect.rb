@@ -25,7 +25,7 @@ def collect(path, out)
       if !rev.nil? then
         new = $1
         #puts "MSG -------------> #{msg}"
-        diff = `git diff -U0 #{rev} #{new} #{path}`
+        diff = `git diff --patience --ignore-space-change --ignore-blank-lines --ignore-space-at-eol -U0 #{rev} #{new} #{path}`
         file = "#{out}/#{ind}_#{rev}-#{new}_#{File.basename(path)}.diff"
         diffs[[rev,new]] = diff;
         msgs[[rev,new]] = msg;
@@ -70,12 +70,12 @@ if __FILE__ == $0 then
     end
   end
   lst.map! { |x| "<#{x[0]}, #{x[1]}, #{x[2]}, #{x[3]}>" }
-  puts "{#{lst.join(",\n")}}"
-  puts
+  #puts "{#{lst.join(",\n")}}"
+  #puts
   
   srclst.map! { |x| "<#{x[0]}, #{x[1]}, #{x[2]}>" }
-  puts "{#{srclst.join(",\n")}}"
-  puts
+  #puts "{#{srclst.join(",\n")}}"
+  #puts
 
 
   difflst.map! { |x| "<#{x[0]}, #{x[1]}, #{x[2]}, #{x[3]}>" }

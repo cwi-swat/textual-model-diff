@@ -20,6 +20,7 @@ void showDiff(str file, str v1, str v2) {
    println(a);
    println("B =");
    println(b);
+   println(splitDiff(b));
    println(delta2str(d));
  }
 }
@@ -94,12 +95,39 @@ lrel[str,str,str,str,str,Delta] caseStudy() {
     ts1 = derricIdClassMap(ast1, g1);
     ts2 = derricIdClassMap(ast2, g2);
     
-    
-    
-    
     ia = <isKey, isRef, getId>;
   
-    matching = identifyEntities(ast1, ast2, ts1, ts2, g1, g2, ia);
+    
+    <delLines, addLines> = splitDiff(textDiff);
+    println("Deleted: <delLines>");
+    println("Added: <addLines>");
+    tokens1 = projectEntities(ast1, ts1, g1, ia);
+    tokens2 = projectEntities(ast2, ts2, g2, ia);
+    i = 0;
+    j = 0;
+    IDMatching matching = <{}, {}, ()>;
+    while (i < size(tokens1) || j < size(tokens2)) {
+      if (i < size(tokens1), tokens1[i].location.begin.line in delLines) {
+        matching.deleted += {tokens1[i].location};
+        i += 1;
+        continue;
+      }
+      if (j < size(tokens2), tokens2[j].location.begin.line in addLines) {
+        matching.added += {tokens2[j].location};
+        j += 1;
+        continue;
+      }
+      matching.id[tokens1[i].location] = tokens2[j].location;
+      i += 1;
+      j += 1;
+    }
+    assert i == size(tokens1);
+    assert j == size(tokens2);
+    
+    
+    
+    
+    //matching = identifyEntities(ast1, ast2, ts1, ts2, g1, g2, ia);
     theMsg = "";
     if (<path, from, to, msg> <- msgs) {
       theMsg = msg;
