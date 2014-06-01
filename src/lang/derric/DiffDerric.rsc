@@ -7,6 +7,7 @@ import lang::derric::NameRel;
 import lang::derric::BuildFileFormat;
 import lang::derric::FileFormat;
 
+import util::Math;
 import ValueIO;
 import IO;
 import String;
@@ -38,12 +39,14 @@ lrel[str,str,str, int, int] textStats() {
 }
 
 alias Stats
-  = lrel[str path,str from,str to, int linesAdded, int linesRemoved, int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, str msg];
+  = lrel[str path,str from,str to, int linesAdded, int linesRemoved, real linesChangedPerSource, 
+         int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, 
+         int total, real opsPerSourceNode, int otherNodes, str msg];
   
 
 void stats2latex(Stats s) {
   prev = "";
-  for (<str path,str from,str to, int linesAdded, int linesRemoved, int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, str msg> <- s) {
+  for (<str path,str from,str to, int linesAdded, int linesRemoved, real linesChangedPer, int create, int delete, int insT, int insR, int remove, int setP, int setR, int setT, int total, real opsPerSrcNode, int other, str msg> <- s) {
     p = "\\textbf{<path[findFirst(path, "/") + 1..]>}";
     if (path == prev) {
       p = "";
@@ -51,14 +54,30 @@ void stats2latex(Stats s) {
     prev = path;
     from = "\\github{<from>}"; 
     to = "\\github{<to>}"; 
-    println("<p> & <from> & <to> & <linesAdded> & <linesRemoved> & <create> & <delete> & <insT> & <insR> & <remove> & <setP> & <setR> & <setT> & <msg[findFirst(msg, ":") + 1..]>\\\\");
+    println("<p> & <from> & <to> & <linesAdded> & <linesRemoved> & <linesChangedPer> & <create> & <delete> & <insT> & <insR> & <remove> & <setP> & <setR> & <setT> & <total> & <opsPerSrcNode> & <other> & <msg[findFirst(msg, ":") + 1..]>\\\\");
   }
+}
+
+real avgNumOfNodes() {
+  srcs = readTextValueFile(#lrel[str,str,str], |project://textual-model-diff/resources/derric.sources|);
+  int c = 0;
+  int s = 0;
+  for (<path, from, src> <- srcs) {
+    ast = load(src, |file:///bla|);
+    c += 1;
+    x = size([ n | /node n := ast ]);
+    println("<c>: <path> <from> <x>");
+    s += x;
+  }
+  return toReal(s) / toReal(c);
 }
 
 Stats tmdiffStats() {
   diffs = readTextValueFile(#lrel[str,str,str,str,str, Delta], |project://textual-model-diff/resources/derric.tmdiffs|);
-  iprintln(diffs);
+  srcs = readTextValueFile(#lrel[str,str,str], |project://textual-model-diff/resources/derric.sources|);
   result = [];
+  int totalNumOfNodes = 0;
+  int astCount = 0;
   for (<path, from, to, msg, td, diff> <- diffs) {
      c = [ x | /Edit x := diff, x is create ];
      d = [ x | /Edit x := diff, x is delete ];
@@ -69,11 +88,36 @@ Stats tmdiffStats() {
      setR = [ x | /Edit x := diff, x is setRef ];
      setT = [ x | /Edit x := diff, x is setTree ];
      
+     total = size(c)+ size(d) + size(insT) + size(insR) + size(r) + size(setP) + size(setR) + size(setT);
+     numOfOtherNodes = size([ x | /node x := diff, Edit _ !:= x, PathElement _ !:= x ]);
+     
      <ad, de> = countAddDel(td);
-     println("MSG = <msg>");
-     println(delta2str(diff));
-     result += [<path, from, to, ad, de, size(c), size(d), size(insT), size(insR), size(r), size(setP), size(setR), size(setT), msg>];
+     
+     real linesChangedPer = 0.0;
+     real opsPerSrcNode = 0.0;
+     if (<path, from, src> <- srcs) {
+       locs = size(split("\n", src));
+       println("LOCS = <locs>");
+       //linesChangedPer = percent(toReal(ad + de), toReal(locs));
+       linesChangedPer = toReal(round(1000.0 * (toReal(ad + de) / toReal(locs)))) / 10.0;
+       
+       ast = load(src, |file://bla|);
+       numOfNodes = size([ n | /node n := ast ]);
+       totalNumOfNodes += numOfNodes;
+       astCount += 1;
+       //opsPerSrcNode = percent(toReal(total), toReal(numOfNodes));
+       opsPerSrcNode = toReal(round(1000.0 * (toReal(total) / toReal(numOfNodes)))) / 10.0;
+     }
+     else {
+       throw "Could not find source: <path> (<from>)";
+     }
+     
+     result += [<path, from, to, ad, de, linesChangedPer, size(c), size(d), 
+        size(insT), size(insR), size(r), size(setP), size(setR), size(setT), total, opsPerSrcNode, numOfOtherNodes, msg>];
   }
+  println("Total num of node: <totalNumOfNodes>");
+  println("Num of asts: <astCount>");
+  println("Avg: <toReal(totalNumOfNodes) / toReal(astCount)>");
   return result;
 }
 
@@ -117,7 +161,14 @@ lrel[str,str,str,str,str,Delta] caseStudy() {
         j += 1;
         continue;
       }
-      matching.id[tokens1[i].location] = tokens2[j].location;
+      assert tokens1[i].content == tokens2[j].content;
+      if (tokens1[i].class == tokens2[j].class) {
+        matching.id[tokens1[i].location] = tokens2[j].location;
+      }
+      else {
+        matching.deleted = tokens1[i].location;
+        matching.added = tokens2[j].location;
+      }
       i += 1;
       j += 1;
     }
