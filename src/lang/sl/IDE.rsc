@@ -37,6 +37,9 @@ public void sl_register()
   set[Contribution] sl_contributions =
   {
     sl_style,
+    annotator(Tree (Tree input) {
+        return input;
+    }),
     builder(set[Message] ((&T<:Tree) tree) {
       ast = sl_implode(tree);
       println("Saving!");

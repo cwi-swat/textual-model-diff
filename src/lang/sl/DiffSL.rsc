@@ -49,6 +49,8 @@ tuple[list[Edit], map[loc,loc]] diffSL(Machine ast1, Machine ast2) {
 
   meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
   
+  iprintln("META");
+  iprintln(meta);
   ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
   iprintln(ops);
   return <ops, matching.id>;
@@ -62,6 +64,8 @@ tuple[list[Edit], map[loc,loc]] createSL(Machine ast) {
   ts = slIdClassMap(ast, r);
   ia = <isKey, isRef, getId>;
   meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
+  println("META!!!");
+  iprintln(meta);
   ops = theDiff({}, ts, <{}, {}, {}>, r, <r.defs, {}, ()>, meta, ia);
   return <ops, ()>;
 }

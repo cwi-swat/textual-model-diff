@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Mach {
 	public String id;
@@ -15,6 +14,7 @@ public class Mach {
 
 	public void init(State initial) {
 		currentState = initial;
+		currentState.visits += 1;
 	}
 	
 	public void step(String event, Writer output) throws IOException {
@@ -27,6 +27,7 @@ public class Mach {
 				output.write(target.id);
 				trans.numberOfFirings++;
 				currentState = target;
+				currentState.visits += 1;
 				break;
 			}
 		}

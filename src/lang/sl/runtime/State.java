@@ -5,4 +5,5 @@ import java.util.List;
 
 public class State extends Named {
 	public List<Trans> transitions = new ArrayList<Trans>();
+	public int visits = 0;
 }
