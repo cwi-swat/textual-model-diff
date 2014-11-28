@@ -1,12 +1,10 @@
 package lang.sl.runtime;
 
-import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.ByteArrayOutputStream;
@@ -22,7 +20,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -36,6 +33,8 @@ public class Main implements Patchable {
 	private SLPatch system;
 	private ByteArrayOutputStream boas = new ByteArrayOutputStream();
 
+	private JFrame frame;
+	
 	public Main() {
 		this.deltaQueue = new ConcurrentLinkedQueue<Delta>();
 		this.system = new SLPatch(new PrintStream(boas));
@@ -76,9 +75,10 @@ public class Main implements Patchable {
 		}
 	}
 	
-	private void addEventButtons(final Mach m, JPanel events, final JTextArea status) {
+	private void addEventButtons(final Mach m, final JPanel events, final JTextArea status) {
 		List<Named> states = new ArrayList<>();
-		states.addAll(m.states);
+//		states.addAll(m.states);
+		states.add(m.currentState);
 		while (!states.isEmpty()) {
 			Named s = states.remove(0);
 			if (s instanceof State) {
@@ -96,6 +96,7 @@ public class Main implements Patchable {
 								e1.printStackTrace();
 							}
 							showMachine(m, status);
+							updateEventButtons(status, events, m);
 						}
 
 						private void showMachine(final Mach m,
@@ -115,7 +116,7 @@ public class Main implements Patchable {
 	}
 
 	protected void setup() {
-		final JFrame frame = new JFrame("State machine");
+		frame = new JFrame("State machine");
 		frame.setLayout(new FlowLayout());
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
@@ -148,10 +149,7 @@ public class Main implements Patchable {
 					printMachine(m, sw);
 					status.setText(sw.toString());
 					events.removeAll();
-					addEventButtons(m, events, status);
-					frame.pack();
-					events.invalidate();
-					events.repaint();
+					updateEventButtons(status, events, m);
 				}
 			}
 		});
@@ -167,6 +165,15 @@ public class Main implements Patchable {
 
 	}
 
+	private void updateEventButtons(final JTextArea status, final JPanel events, Mach m) {
+		System.err.println("Updating event buttons");
+		events.removeAll();
+		addEventButtons(m, events, status);
+//		frame.pack();
+		events.revalidate();
+		events.repaint();
+	}
+	
 	@Override
 	public Queue<Delta> getQueue() {
 		return deltaQueue;
