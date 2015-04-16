@@ -62,7 +62,7 @@ ASTModelMap astModelMap(type[&T<:node] theAdt, str pkg)
 {
   r = {};
   visit (theAdt) {
-    case cons(label(str x, _), flds, _): {
+    case cons(label(str x, _), flds, _, _, _): {
       q = (pkg == "") ? "" : (pkg + ".");
       r += { <x, q + capitalize(x), [ f | label(str f, _) <- flds ]> };
     }
@@ -80,7 +80,8 @@ str featureOf(node n, int i, int arity, ASTModelMap m) =
   featuresOf(n, arity, m)[i];
 
 str classOf(node n, ASTModelMap m) = class
-  when cons := getName(n), <cons, class, _> <- m; 
+  when bprintln(n), cons := getName(n), bprintln(cons), bprintln(m),
+          <cons, class, _> <- m; 
 
 Tokens projectEntities(&T<:node t, IDClassMap cm, NameGraph g, IDAccess ia) {
   m = [];

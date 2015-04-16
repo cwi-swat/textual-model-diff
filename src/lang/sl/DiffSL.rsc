@@ -92,6 +92,8 @@ Delta testSL(loc v1, loc v2) {
   iprintln(matching);
 
   meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
+  println("META!!!!!");
+  iprintln(meta);
   
   ops = theDiff(ts1, ts2, r1, r2, matching, meta, ia);
 
