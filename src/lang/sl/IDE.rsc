@@ -4,6 +4,7 @@ import lang::sl::Syntax;
 import lang::sl::AST;
 import lang::sl::NameAnalyzer;
 import lang::sl::DiffSL;
+import util::Diff;
 
 import ParseTree;
 import util::IDE;
@@ -12,11 +13,17 @@ import IO;
 import ValueIO;
 import Message;
 
+import util::RuntimeDiff;
+
 public str SL_NAME = "State Language"; //language name
 public str SL_EXT  = "sl"; //file extension
 
+private bool firstRun = true;
+
 public void sl_register()
 {
+  system = requestSystem();
+  runInterpreter(system, "lang.sl.runtime.Main");
   Contribution sl_style =
     categories
     (
@@ -32,7 +39,43 @@ public void sl_register()
 
   set[Contribution] sl_contributions =
   {
-    sl_style
+    sl_style,
+    annotator(Tree (Tree input) {
+        return input;
+    }),
+    builder(set[Message] ((&T<:Tree) tree) {
+      println("Saving!");
+      loc curLoc = tree @\loc;
+      loc prevLoc = |<curLoc.scheme>://<curLoc.authority>/<curLoc.path>|[extension="prev.sl"];
+      
+      //println("current location = <curLoc>");
+      //println("previous location = <prevLoc>");
+            
+      if (exists(prevLoc) && firstRun == false) {
+        println("We have previous version.");
+        //prevAst = readTextValueFile(#lang::sl::AST::Machine, prevLoc);
+        <delta, mapping> = diffSL(prevLoc, curLoc);
+        str prettyDelta = delta2str(delta);
+        println("Edit script\n----------\n<prettyDelta>----------");
+        //println("Sending delta");
+        //sendDelta(system, delta, mapping); 
+      }
+      else {
+        firstRun = false;
+        println("Initial run; creating.");
+        <delta, mapping> = createSL(tree);        
+        str prettyDelta = delta2str(delta);
+        println("Edit script\n----------\n<prettyDelta>----------");
+        //println("Sending delta");
+        //sendDelta(system, delta, mapping);
+      }
+      
+
+      str contents = unparse(tree);
+      writeFile(prevLoc, contents);
+      println("End of save.");
+      return {};
+    })
   };
 
   registerLanguage(SL_NAME, SL_EXT, lang::sl::Syntax::sl_parse);
