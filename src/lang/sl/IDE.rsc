@@ -57,8 +57,8 @@ public void sl_register()
         <delta, mapping> = diffSL(prevLoc, curLoc);
         str prettyDelta = delta2str(delta);
         println("Edit script\n----------\n<prettyDelta>----------");
-        //println("Sending delta");
-        //sendDelta(system, delta, mapping); 
+        println("Sending delta");
+        sendDelta(system, delta, mapping); 
       }
       else {
         firstRun = false;
@@ -66,8 +66,8 @@ public void sl_register()
         <delta, mapping> = createSL(tree);        
         str prettyDelta = delta2str(delta);
         println("Edit script\n----------\n<prettyDelta>----------");
-        //println("Sending delta");
-        //sendDelta(system, delta, mapping);
+        println("Sending delta");
+        sendDelta(system, delta, mapping);
       }
       
 
