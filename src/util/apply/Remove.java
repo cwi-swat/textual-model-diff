@@ -1,6 +1,6 @@
 package util.apply;
 
-public class Remove extends Edit {
+public class Remove extends RelativeEdit {
 
 	Remove(Object owner, Path path) {
 		super(owner, path);

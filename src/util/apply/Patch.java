@@ -59,13 +59,7 @@ public class Patch implements Visitor {
 		try {
 			Class<?> cls = Class.forName(create.getKlass());
 			Object obj = cls.newInstance();
-			if (create.appliesToRoot()) {
-				objectSpace.put(create.getOwnerKey(), obj);
-			}
-			else {
-				Object owner = objectSpace.get(create.getOwnerKey());
-				create.getPath().assign(owner, obj);
-			}
+			objectSpace.put(create.getOwnerKey(), obj);
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		} catch (InstantiationException e) {
@@ -76,35 +70,62 @@ public class Patch implements Visitor {
 	}
 
 	@Override
-	public void visit(Remove remove) {
-		if (remove.appliesToRoot()) {
-			objectSpace.remove(remove.getOwnerKey());
+	public void visit(Remove edit) {
+		if (edit.appliesToRoot()) {
+			objectSpace.remove(edit.getOwnerKey());
 		}
 		else {
-			Object owner = lookup(remove.getOwnerKey());
-			remove.getPath().delete(owner );
+			Object owner = lookup(edit.getOwnerKey());
+			edit.getPath().delete(owner);
 		}
 	}
 
-	
+	@Override
+	public void visit(Delete edit) {
+	  objectSpace.remove(edit.getOwnerKey());
+	}
+
 	protected Object lookup(Object key) {
 		return objectSpace.get(key);
 	}
 	
 	@Override
-	public void visit(Insert insert) {
-		assert !insert.appliesToRoot();
-		Object obj = lookup(insert.getInsertedKey());
+	public void visit(InsertRef edit) {
+		assert !edit.appliesToRoot();
+		Object obj = lookup(edit.getInsertedKey());
 		if (obj == null) {
 			log.println("Object is null!!!!");
 		}
-		Object owner = lookup(insert.getOwnerKey());
-		insert.getPath().assign(owner, obj);
+		Object owner = lookup(edit.getOwnerKey());
+		edit.getPath().assign(owner, obj);
 	}
 
+  @Override
+  public void visit(InsertTree edit) {
+    assert !edit.appliesToRoot();
+    Object obj = lookup(edit.getInsertedKey());
+    if (obj == null) {
+      log.println("Object is null!!!!");
+    }
+    Object owner = lookup(edit.getOwnerKey());
+    edit.getPath().assign(owner, obj);
+  }
+	
 	@Override
-	public void visit(Set setPrim) {
-		Object owner = lookup(setPrim.getOwnerKey());
-		setPrim.getPath().assign(owner, setPrim.getValue());
+	public void visit(SetPrim edit) {
+		Object owner = lookup(edit.getOwnerKey());
+		edit.getPath().assign(owner, edit.getValue());
 	}
+
+  @Override
+  public void visit(SetTree edit) {
+    Object owner = lookup(edit.getOwnerKey());    
+    edit.getPath().assign(owner, edit.getValue());
+  }	
+	
+  @Override
+  public void visit(SetRef edit) {
+    Object owner = lookup(edit.getOwnerKey());
+    edit.getPath().assign(owner, edit.getValue());
+  }
 }

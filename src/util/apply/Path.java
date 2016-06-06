@@ -10,11 +10,20 @@ public class Path {
 		this.elts = elts;
 	}
 	
-	public void assign(Object owner, Object obj) {
-		for (int i = 0; i < elts.length - 1; i++) {
-			owner = elts[i].deref(owner);
-		}
-		elts[elts.length - 1].assign(owner, obj);
+	public void assign(Object owner, Object obj){
+	  if(!isEmpty())
+	  {
+  		for (int i = 0; i < elts.length - 1; i++) {
+	  		owner = elts[i].deref(owner);
+		  }
+		  elts[elts.length - 1].assign(owner, obj);
+	  }
+	  else
+	  {
+	    //FIXME: here we have to unify a rascal node with an existing object
+	    System.out.println("Assigning " + owner + " = " + obj);
+	    
+	  }
 	}
 	
 	public boolean isEmpty() {

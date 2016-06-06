@@ -4,8 +4,8 @@ package util.apply;
 public class Create extends Edit {
 	private String klass;
 
-	Create(Object owner, Path path, String klass) {
-		super(owner, path);
+	Create(Object owner, String klass) {
+		super(owner);
 		this.klass = klass;
 	}
 
@@ -16,6 +16,11 @@ public class Create extends Edit {
 	@Override
 	public void accept(Visitor v) {
 		v.visit(this);
+	}
+	
+	@Override
+	public boolean appliesToRoot(){
+	  return true;
 	}
 	
 	@Override

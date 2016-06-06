@@ -18,7 +18,6 @@ import org.eclipse.imp.pdb.facts.type.TypeFactory;
 import org.eclipse.imp.pdb.facts.type.TypeStore;
 
 public class Factory {
-
 	public static final TypeStore Diff = new TypeStore();
 	
 	private static final TypeFactory tf = TypeFactory.getInstance();
@@ -35,18 +34,39 @@ public class Factory {
 	public static final Type Delta =
 			tf.aliasType(Diff, "Delta", tf.listType(Edit));
 
-	public static final Type Edit_set =
-			tf.constructor(Diff, Edit, "set", 
+	public static final Type Edit_setPrim =
+			tf.constructor(Diff, Edit, "setPrim", 
 					tf.sourceLocationType(), "object",
 					Path, "path",
 					tf.valueType(), "x");
 
-	public static final Type Edit_insert =
-			tf.constructor(Diff, Edit, "insert", 
+	/*public static final Type Edit_setTree =
+	      tf.constructor(Diff, Edit, "setTree", 
+	          tf.sourceLocationType(), "object",
+	          Path, "path",
+	          tf.valueType(), "tree");
+   */
+	 /*
+   public static final Type Edit_setRef =
+       tf.constructor(Diff, Edit, "setref", 
+           tf.sourceLocationType(), "object",
+           Path, "path",
+           tf.valueType(), "ref");
+   */
+	/*
+   public static final Type Edit_insertRef =
+       tf.constructor(Diff, Edit, "insertRef", 
+           tf.sourceLocationType(), "object",
+           Path, "path",
+           tf.valueType(), "ref");
+   */
+	/*
+	public static final Type Edit_insertTree =
+			tf.constructor(Diff, Edit, "insertTree", 
 					tf.sourceLocationType(), "object",
 					Path, "path",
-					tf.sourceLocationType(), "ref");
-
+					tf.sourceLocationType(), "tree");
+  */
 	public static final Type Edit_remove =
 			tf.constructor(Diff, Edit, "remove", 
 					tf.sourceLocationType(), "object",
@@ -55,14 +75,11 @@ public class Factory {
 	public static final Type Edit_create =
 			tf.constructor(Diff, Edit, "create", 
 					tf.sourceLocationType(), "object",
-					//removed by rozen: Path, "path",
 					tf.stringType(), "class");
 
-	//added by rozen: 
 	public static final Type Edit_delete = 
 	    tf.constructor(Diff, Edit, "delete",
 	        tf.sourceLocationType(), "object");
-
 	
 	public static List<Edit> convert(IValue value) {
 		if (value.getType().isSubtypeOf(Delta)) {
@@ -79,22 +96,63 @@ public class Factory {
 	private static Edit convertEdit(IConstructor v) {
 		String n = v.getName();
 		Object key = v.get("object");
-		Path path = convertPath((IList)v.get("path"));
-		if (n.equals("set")) {
-			return new Set(key, path, convertValue(v.get("x")));
-		}
-		if (n.equals("insert")) {
-			return new Insert(key, path, v.get("ref"));
-		}
-		if (n.equals("remove")) {
-			return new Remove(key, path);
-		}
-		if (n.equals("create")) {
-			return new Create(key, path, ((IString)v.get("class")).getValue());
-		}
+		
+    if (n.equals("create")) {
+      return new Create(key, ((IString)v.get("class")).getValue());
+    }
+    else if(n.equals("delete")) {
+      return new Delete(key);
+    }
+    else
+    {
+      Path path = convertPath((IList)v.get("path"));
+      
+		  if (n.equals("setTree")) {
+		    return new SetTree(key, path, convertValue(v.get("tree")));
+		  }
+		  else if (n.equals("setRef")) {
+        return new SetTree(key, path, convertValue(v.get("ref")));
+      }
+		  else if (n.equals("setPrim")) {
+        return new SetTree(key, path, convertValue(v.get("x")));
+      }
+		  else if (n.equals("insertRef")) {
+		    return new InsertRef(key, path, v.get("ref"));
+		  }
+      else if (n.equals("insertTree")) {
+        return new InsertRef(key, path, v.get("tree"));
+      }		  
+      else if (n.equals("remove")) {
+		    return new Remove(key, path);
+  		}
+    }
 		throw new AssertionError("Invalid edit constructor: " + n);
 	}
-
+	
+	/*
+  private static Object convertValue(INode x)
+  {
+    Object object = null;
+    java.util.Iterator<IValue> i = x.iterator();
+    
+    String name = x.getName();
+    System.out.println("NAME: "+ name);
+    
+    if(name.equals("name")){
+      return (Object) x.get(0).toString();
+    }
+    
+    int count = 0;
+    while(i.hasNext())
+    {
+       IValue child = i.next();
+       System.out.println("child["+count+"]: "+ child.toString());
+       count++;
+    }
+    
+    return object;
+  }*/
+ 
 	private static Object convertValue(IValue x) {
 		if (x.getType().isInteger()) {
 			return Integer.parseInt(((IInteger)x).getStringRepresentation());
@@ -108,10 +166,17 @@ public class Factory {
 		if (x.getType().isBool()) {
 			return ((IBool)x).getValue();
 		}
-		if (x.getType().isNode() && ((IConstructor)x).arity() == 1) {
-			// hack: to get names out of defs.
-			return ((IString)((INode)x).get(0)).getValue();
+		if (x.getType().isNode()){
+		  System.out.println("Oh dear we have a node: "+x.toString());
+      //INode n = (INode) x;
+		  return x;
+      //Class<?> cls = Class.forName(S);
+      //Object obj = cls.newInstance();		  
 		}
+		//if (x.getType().isNode() && ((IConstructor)x).arity() == 1) {
+			// hack: to get names out of defs.
+		//	return ((IString)((INode)x).get(0)).getValue();
+		//}
 		throw new AssertionError("invalid value type " + x.getType());
 	}
 
