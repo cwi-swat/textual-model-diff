@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Mach {
 	public String id;
-	public List<Named> states = new ArrayList<Named>();
+	public List<Element> states = new ArrayList<Element>();
 
 	// Runtime
 	State currentState;
@@ -34,7 +34,7 @@ public class Mach {
 	}
 
 	public State findInitial() {
-		for (Named n: states) {
+		for (Element n: states) {
 			if (n instanceof State) {
 				return (State) n;
 			}

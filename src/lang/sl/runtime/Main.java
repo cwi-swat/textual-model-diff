@@ -53,10 +53,10 @@ public class Main implements Patchable {
 		// * <name> <visited> {<events>}
 		w.append("  | State      | #  | Events\n");
 		w.append("--+------------+----+---------------\n");
-		List<Named> states = new ArrayList<>();
+		List<Element> states = new ArrayList<>();
 		states.addAll(m.states);
 		while (!states.isEmpty()) {
-			Named s = states.remove(0);
+			Element s = states.remove(0);
 			if (s instanceof State) {
 				String cur = m.currentState == s ? "*" : " ";
 				List<Trans> ts = ((State)s).transitions;
@@ -73,10 +73,10 @@ public class Main implements Patchable {
 	}
 	
 	private void addEventButtons(final Mach m, JPanel events, final JTextArea status) {
-		List<Named> states = new ArrayList<>();
+		List<Element> states = new ArrayList<>();
 		states.addAll(m.states);
 		while (!states.isEmpty()) {
-			Named s = states.remove(0);
+			Element s = states.remove(0);
 			if (s instanceof State) {
 				for (final Trans t: ((State)s).transitions) {
 					System.out.println("Adding button for " + t.event);
