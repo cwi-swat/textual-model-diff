@@ -200,9 +200,12 @@ IDClassMap slIdClassMap(Machine m, NameGraph g) {
 //Flatten delta's
 public Delta flatten(Delta delta, ASTModelMap m)
   = fix(order([*flatten(op, m) | op <- delta]));
-  
+
 public Delta fix(Delta delta)
   = [fix(op) | op <- delta];  
+
+public map[loc,loc] fix(map[loc,loc] m)
+  = ( fix(l1) : m[l1] | l1 <- m );
 
 public loc fix(loc l)
 {

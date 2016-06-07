@@ -213,11 +213,8 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
     }
   }
 
-  println("OOOOHH");
-  println(n);
   
-  loc l = n@location;
-  
+  loc l = n@location;  
   return makeNode(getName(n), newKs)[@location = l];
 }
 

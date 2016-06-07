@@ -56,6 +56,10 @@ public void sl_register()
         //prevAst = readTextValueFile(#lang::sl::AST::Machine, prevLoc);
         <delta, flatDelta, mapping> = diffSL(prevLoc, curLoc);
         str prettyDelta = delta2str(delta);
+        println("Mapping\n----------\n");
+        mapping = fix(mapping);
+        iprintln(mapping);
+        println("----------\n");              
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);
         println("Sending delta");     
@@ -67,6 +71,9 @@ public void sl_register()
         println("Initial run; creating.");
         <delta, flatDelta, mapping> = createSL(tree);        
         str prettyDelta = delta2str(delta);
+        println("Mapping\n----------\n");
+        iprintln(mapping);
+        println("----------\n");
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);
         println("Sending delta");     
