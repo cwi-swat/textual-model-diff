@@ -22,6 +22,12 @@ public class Patch implements Visitor {
 			e.accept(this);
 		}
 		rekey(delta.getMapping());
+		
+		for(Object key: objectSpace.keySet())
+		{
+		   Object value = objectSpace.get(key);
+		   System.out.println(String.format("%s\n\t @ %30s",value, key));		    
+		}
 	}
 	
 	private void rekey(Map<Object, Object> mapping) {
@@ -136,4 +142,5 @@ public class Patch implements Visitor {
     Object owner = lookup(edit.getOwnerKey());
     edit.getPath().assign(owner, edit.getValue());
   }
+
 }
