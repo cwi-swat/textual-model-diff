@@ -54,20 +54,24 @@ public void sl_register()
       if (exists(prevLoc) && firstRun == false) {
         println("We have previous version.");
         //prevAst = readTextValueFile(#lang::sl::AST::Machine, prevLoc);
-        <delta, mapping> = diffSL(prevLoc, curLoc);
+        <delta, flatDelta, mapping> = diffSL(prevLoc, curLoc);
         str prettyDelta = delta2str(delta);
         println("Edit script\n----------\n<prettyDelta>----------");
-        println("Sending delta");
-        sendDelta(system, delta, mapping); 
+        iprintln(delta);
+        println("Sending delta");     
+        iprintln(flatDelta);
+        sendDelta(system, flatDelta, mapping);
       }
       else {
         firstRun = false;
         println("Initial run; creating.");
-        <delta, mapping> = createSL(tree);        
+        <delta, flatDelta, mapping> = createSL(tree);        
         str prettyDelta = delta2str(delta);
         println("Edit script\n----------\n<prettyDelta>----------");
-        println("Sending delta");
-        sendDelta(system, delta, mapping);
+        iprintln(delta);
+        println("Sending delta");     
+        iprintln(flatDelta);       
+        sendDelta(system, flatDelta, mapping);
       }
       
 
@@ -84,3 +88,4 @@ public void sl_register()
 
 public lang::sl::AST::Machine sl_implode(Tree t) 
   = implode(#lang::sl::AST::Machine, t);
+  

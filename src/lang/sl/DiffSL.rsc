@@ -9,6 +9,8 @@ import util::Diff;
 import util::NameGraph;
 import util::GitDiff;
 
+import String;
+import Node;
 import IO;
 import ParseTree;
 
@@ -60,15 +62,18 @@ tuple[list[Edit], map[loc,loc]] diffSL(Machine ast1, Machine ast2) {
 
 //ops = theDiff({}, ts1, <{}, {}, {}>, r1, <r1.defs, {}, ()>, meta, ia); 
   
-tuple[list[Edit], map[loc,loc]] createSL(Tree tree){
+tuple[list[Edit], list[Edit], map[loc,loc]] createSL(Tree tree){
 
   Machine ast = sl_implode(tree);
   r = getNameGraph(setScope(ast)); 
   ts = slIdClassMap(ast, r);
   ia = <isKey, isRef, getId>;
   meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
-  ops = theDiff({}, ts, <{}, {}, {}>, r, <r.defs, {}, ()>, meta, ia);
-  return <ops, ()>;
+  mapping = <r.defs, {}, ()>;
+  ops = theDiff({}, ts, <{}, {}, {}>, r, mapping, meta, ia);
+  flatOps = flatten(ops,meta); 
+  
+  return <ops, flatOps, ()>;
 }
 
 /*
@@ -109,7 +114,7 @@ Delta testSL(loc v1, loc v2) {
 */
 
 
-tuple[list[Edit], map[loc,loc]] diffSL(loc old, loc new) {  
+tuple[list[Edit], list[Edit], map[loc,loc]] diffSL(loc old, loc new) {  
 
   meta = astModelMap(#lang::sl::AST::Machine, "lang.sl.runtime");
   println("META!!!!!");
@@ -172,7 +177,9 @@ tuple[list[Edit], map[loc,loc]] diffSL(loc old, loc new) {
 
   ops = theDiff(ts1, ts2, g1, g2, matching, meta, ia);
 
-  return <ops, matching.id>;
+  flatOps = flatten(ops, meta);
+
+  return <ops, flatOps, matching.id>;
 }
 
 
@@ -190,4 +197,101 @@ IDClassMap slIdClassMap(Machine m, NameGraph g) {
   return idClassMap(m, g, <isKey, isRef, getId>);
 }
 
+//Flatten delta's
+public Delta flatten(Delta delta, ASTModelMap m)
+  = fix(order([*flatten(op, m) | op <- delta]));
+  
+public Delta fix(Delta delta)
+  = [fix(op) | op <- delta];  
 
+public loc fix(loc l)
+{
+  loc n = l;
+  if(l.file != "")
+  {
+    n.file = replaceAll(n.file, "prev.sl", "sl");
+    println("fixing loc <l> = <n>");
+  }
+  return n;
+}
+
+public Edit fix(Edit edit)
+{
+  if(edit.object?){
+    edit.object = fix(edit.object);
+  }
+  if(edit.ref?){
+    edit.ref = fix(edit.ref);
+  }
+  return edit;
+}
+  
+public list[Edit] flatten(insertTree(object, path, tree), ASTModelMap m)
+  = flatten(object, path, tree, m);
+  
+public list[Edit] flatten(setTree(object, path, tree), ASTModelMap m)
+  = flatten(object, path, tree, m);
+
+public list[Edit] flatten(create(object, klass), ASTModelMap m)
+  = []; //hack, creates are recreated by flatten!
+  
+public list[Edit] flatten(Edit edit, ASTModelMap m)
+  = [edit];
+
+public list[Edit] flatten(loc object, Path path, name(x), ASTModelMap m)
+ = [setPrim(object, path, x)];
+
+public list[Edit] flatten(loc object, Path path, int x, ASTModelMap m)
+ = [setPrim(object, path, x)];
+
+public list[Edit] flatten(loc object, Path path, str x, ASTModelMap m)
+ = [setPrim(object, path, x)];
+
+public list[Edit] flatten(loc object, Path path, loc ref, ASTModelMap m)
+ = [insertRef(object, path, ref)];
+
+public list[Edit] flatten(loc object, Path path, list[value] l, ASTModelMap m)
+{ 
+  list[Edit] ops = [];
+  int pos = 0;
+  for(child <- l)
+  {
+    println("position[<pos>]"); 
+    ops += [*flatten(object, path + [index(pos)], child, m)];
+    pos += 1;
+  }
+  return ops;
+}
+
+//flatten an object
+public list[Edit] flatten(loc object, Path path, node tree, ASTModelMap m)
+{
+  str klass = classOf(tree, m);
+  println("Object <klass>");
+  iprintln(tree);
+  list[Edit] ops = [];
+    
+  if(path == []){
+    ops += [create(object, klass)];
+  } else {  
+    ops +=
+    [
+      create(tree@location, klass),
+      insertRef(object, path, tree@location)
+    ];
+  }
+  
+  int arity = size(getChildren(tree));  
+  int pos = 0;
+  for(child <- getChildren(tree))
+  {
+    str feature = featureOf(tree, pos, arity, m);
+    println("Feature[<pos>]: <feature>");
+  
+    ops += [*flatten(object, path + [field(feature)], child, m)];
+    pos += 1;
+  }
+  
+  //[*flatten(object, path + [field(getName(tree))], child) | child <- getChildren(tree)];
+  return ops;
+}
