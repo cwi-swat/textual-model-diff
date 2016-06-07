@@ -8,6 +8,8 @@ import util::Equals;
 
 import Node;
 import IO;
+anno loc node@location;
+
 
 /*
 
@@ -29,12 +31,13 @@ data PathElement
 data Edit
   = create(loc object, str class)
   | delete(loc object)
-  | insertRef(loc object, Path path, loc ref)
-  | insertTree(loc object, Path path, node tree)
   | remove(loc object, Path path)
   | setPrim(loc object, Path path, value x)
   | setRef(loc object, Path path, loc ref)
+  | insertRef(loc object, Path path, loc ref)
+  //syntactic sugar -->
   | setTree(loc object, Path path, node tree)
+  | insertTree(loc object, Path path, node tree)
   ;
 
 //data EditOld 
@@ -209,9 +212,13 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
       newKs += [newList];
     }
   }
+
+  println("OOOOHH");
+  println(n);
   
+  loc l = n@location;
   
-  return makeNode(getName(n), newKs);
+  return makeNode(getName(n), newKs)[@location = l];
 }
 
 //list[Edit] initIt(loc myId, Path path, node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess ia) {
@@ -229,10 +236,10 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
 //      // set ref
 //      if (d2 <- g.refs[ia.getId(kn)]) {
 //        if (org <- mapping.id, mapping.id[org] == d2) {
-//          ops += [\insert(myId, path + [f], org)];
+//          ops += [\insertRef(myId, path + [f], org)];
 //        }
 //        else {
-//          ops += [\insert(myId, path + [f], d2)];
+//          ops += [\insertRef(myId, path + [f], d2)];
 //        }
 //      }
 //      else {
@@ -244,16 +251,16 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
 //      // set ref
 //      d2 = getDefId(kn, g, ia);
 //      if (org <- mapping.id, mapping.id[org] == d2) {
-//        ops += [\insert(myId, path + [f], org)];
+//        ops += [\insertRef(myId, path + [f], org)];
 //      }
 //      else {
-//        ops += [\insert(myId, path + [f], d2)];
+//        ops += [\insertRef(myId, path + [f], d2)];
 //      }
 //    }
 //    
 //    if (isAtom(k, g, ia)) {
 //      // set prim
-//      ops += [\set(myId, path + [f], k)];
+//      ops += [\setPrim(myId, path + [f], k)];
 //    }
 //    
 //    if (node kn := k, isContains(kn, g, ia)) {
@@ -274,20 +281,20 @@ node build(node n, NameGraph g, IDMatching mapping, ASTModelMap meta, IDAccess i
 //          else if (node xn := x, isDef(xn, g, ia)) {
 //            d2 = getDefId(xn, g, ia);
 //            if (org <- mapping.id, mapping.id[org] == d2) {
-//              ops += [\insert(myId, path + [f, index(j)], org)];
+//              ops += [\insertRef(myId, path + [f, index(j)], org)];
 //            }
 //            else {
-//              ops += [\insert(myId, path + [f, index(j)], d2)];
+//              ops += [\insertRef(myId, path + [f, index(j)], d2)];
 //            }
 //          }
 //          else if (node xn := x, ia.isRefId(xn, g)) {
 //            u2 = ia.getId(xn);
 //            if (d2 <- g.refs[u2]) {
 //              if (org <- mapping.id, mapping.id[org] == d2) {
-//                ops += [\insert(myId, path + [f, index(j)], org)];
+//                ops += [\insertRef(myId, path + [f, index(j)], org)];
 //              }
 //              else {
-//                ops += [\insert(myId, path + [f, index(j)], org)];
+//                ops += [\insertRef(myId, path + [f, index(j)], org)];
 //              }
 //            }
 //            
@@ -497,6 +504,41 @@ lrel[&T, &U, &T, &U] outerJoin(lrel[&T, &U] r1, lrel[&T, &U] r2, &U null) {
   r += [ <f1, k1, f1, null> | <&T f1, &U k1> <- r1, f1 notin r2<0> ];
   r += [ <f2, null, f2, k2> | <&T f2, &U k2> <- r2, f2 notin r1<0> ];
   return r;
-} 
-    
-   
+}
+
+
+private bool notCreateOrDelete(Edit op)
+  =  insertRef(_,_,_) := op
+  || insertTree(_,_,_) := op
+  || setRef(_,_,_) := op 
+  || setTree(_,_,_) := op
+  || setPrim(_,_,_) := op
+  || remove(_,_) := op;
+
+public Delta order(Delta d)
+  = [op | op <- d, create(_,_) := op ]
+  + orderByPathLength([op | op <- d, notCreateOrDelete(op)])
+  + [op | op <- d, delete(_) := op ];
+
+public bool less(Edit e1, Edit e2)
+{
+  if(size(e1.path) < size(e2.path))
+  {
+    return true;
+  }
+  else if(size(e1.path) == size(e2.path) && size(e1.path) > 0)
+  {
+    if(index(i1) := e1.path[size(e1.path)-1] &&
+       index(i2) := e2.path[size(e2.path)-1])
+      {
+        return (i1 < i2);
+      }
+  }
+  return false;
+}
+
+public Delta orderByPathLength(Delta d)
+  = sort(d, less);
+
+ 
+  
