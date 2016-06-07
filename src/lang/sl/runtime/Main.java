@@ -64,7 +64,9 @@ public class Main implements Patchable {
 				for (Trans t: ts) {
 					es.add(t.event);
 				}
+								
 				w.append(String.format("%s | %10s | %2d | %s\n", cur, s.id, ((State) s).visits, Arrays.toString(es.toArray())));	
+			
 			}
 			else if (s instanceof Group) {
 				states.addAll(((Group)s).states);

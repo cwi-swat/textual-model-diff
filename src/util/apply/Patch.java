@@ -14,7 +14,8 @@ public class Patch implements Visitor {
 	}
 	
 	public void apply(Delta delta) {
-//		for (Object o: objectSpace.keySet()) {
+    System.out.println("----------\nState before:\n----------\n"+this.toString());
+	  //		for (Object o: objectSpace.keySet()) {
 //			log.println("Object: " + o + " = " + objectSpace.get(o));
 //		}
 		for (Edit e: delta.getEdits()) {
@@ -23,11 +24,7 @@ public class Patch implements Visitor {
 		}
 		rekey(delta.getMapping());
 		
-		for(Object key: objectSpace.keySet())
-		{
-		   Object value = objectSpace.get(key);
-		   System.out.println(String.format("%s\n\t @ %30s",value, key));		    
-		}
+    System.out.println("----------\nState after:\n----------\n"+this.toString());
 	}
 	
 	private void rekey(Map<Object, Object> mapping) {
@@ -142,5 +139,34 @@ public class Patch implements Visitor {
     Object owner = lookup(edit.getOwnerKey());
     edit.getPath().assign(owner, edit.getValue());
   }
+  
+  public String toString()
+  {
+    String r = "";
+    for(Object key: objectSpace.keySet())
+    {
+      Object obj = objectSpace.get(key);
+      r += String.format("%s\n\t @ %s\n", obj, key);
 
+      if(obj != null)
+      {
+        Class<?> c = obj.getClass();
+        java.lang.reflect.Field[] fields = c.getFields();
+        for(java.lang.reflect.Field field : fields)
+        {
+          String fieldName = field.getName();
+          Object fieldValue = null;
+          try
+          {
+            fieldValue = field.get(obj);
+          }
+          catch(Exception e)
+          {
+          }
+          r += String.format("\t%10s = %s\n", fieldName, fieldValue);
+        }
+      }   
+    }
+    return r;
+  }
 }
