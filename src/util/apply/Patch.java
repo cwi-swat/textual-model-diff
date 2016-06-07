@@ -55,11 +55,12 @@ public class Patch implements Visitor {
 	}
 
 	@Override
-	public void visit(Create create) {
+	public void visit(Create edit) {
+    System.out.println(edit.toString());  
 		try {
-			Class<?> cls = Class.forName(create.getKlass());
+			Class<?> cls = Class.forName(edit.getKlass());
 			Object obj = cls.newInstance();
-			objectSpace.put(create.getOwnerKey(), obj);
+			objectSpace.put(edit.getOwnerKey(), obj);
 		} catch (ClassNotFoundException e) {
 			throw new RuntimeException(e);
 		} catch (InstantiationException e) {
@@ -71,6 +72,7 @@ public class Patch implements Visitor {
 
 	@Override
 	public void visit(Remove edit) {
+    System.out.println(edit.toString());  	  
 		if (edit.appliesToRoot()) {
 			objectSpace.remove(edit.getOwnerKey());
 		}
@@ -82,6 +84,7 @@ public class Patch implements Visitor {
 
 	@Override
 	public void visit(Delete edit) {
+    System.out.println(edit.toString());
 	  objectSpace.remove(edit.getOwnerKey());
 	}
 
@@ -91,6 +94,7 @@ public class Patch implements Visitor {
 	
 	@Override
 	public void visit(InsertRef edit) {
+    System.out.println(edit.toString());
 		assert !edit.appliesToRoot();
 		Object obj = lookup(edit.getInsertedKey());
 		if (obj == null) {
@@ -102,6 +106,7 @@ public class Patch implements Visitor {
 
   @Override
   public void visit(InsertTree edit) {
+    System.out.println(edit.toString());   
     assert !edit.appliesToRoot();
     Object obj = lookup(edit.getInsertedKey());
     if (obj == null) {
@@ -113,18 +118,21 @@ public class Patch implements Visitor {
 	
 	@Override
 	public void visit(SetPrim edit) {
-		Object owner = lookup(edit.getOwnerKey());
+    System.out.println(edit.toString());
+	  Object owner = lookup(edit.getOwnerKey());
 		edit.getPath().assign(owner, edit.getValue());
 	}
 
   @Override
   public void visit(SetTree edit) {
+    System.out.println(edit.toString());
     Object owner = lookup(edit.getOwnerKey());    
     edit.getPath().assign(owner, edit.getValue());
   }	
 	
   @Override
   public void visit(SetRef edit) {
+    System.out.println(edit.toString());
     Object owner = lookup(edit.getOwnerKey());
     edit.getPath().assign(owner, edit.getValue());
   }

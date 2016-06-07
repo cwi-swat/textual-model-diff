@@ -20,6 +20,6 @@ public class SetPrim extends RelativeEdit {
   
   @Override
   public String toString() {
-    return "insert(" + super.toString() + ", " + obj + ")";
+    return "setPrim(" + super.toString() + "," + obj + ")";
   }
 }

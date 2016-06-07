@@ -17,6 +17,6 @@ public abstract class Edit {
 	public abstract void accept(Visitor v);
 	
 	public String toString(){
-	  return key+",";
+	  return key+"";
 	}
 }

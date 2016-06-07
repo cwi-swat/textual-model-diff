@@ -21,6 +21,6 @@ public class InsertTree extends RelativeEdit {
 	
 	@Override
 	public String toString() {
-		return "insert(" + super.toString() + ", " + obj + ")";
+		return "insertTree(" + super.toString() + ", " + obj + ")";
 	}
 }

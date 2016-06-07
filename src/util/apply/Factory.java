@@ -111,16 +111,16 @@ public class Factory {
 		    return new SetTree(key, path, convertValue(v.get("tree")));
 		  }
 		  else if (n.equals("setRef")) {
-        return new SetTree(key, path, convertValue(v.get("ref")));
+        return new SetRef(key, path, convertValue(v.get("ref")));
       }
 		  else if (n.equals("setPrim")) {
-        return new SetTree(key, path, convertValue(v.get("x")));
+        return new SetPrim(key, path, convertValue(v.get("x")));
       }
 		  else if (n.equals("insertRef")) {
 		    return new InsertRef(key, path, v.get("ref"));
 		  }
       else if (n.equals("insertTree")) {
-        return new InsertRef(key, path, v.get("tree"));
+        return new InsertTree(key, path, v.get("tree"));
       }		  
       else if (n.equals("remove")) {
 		    return new Remove(key, path);
@@ -166,17 +166,10 @@ public class Factory {
 		if (x.getType().isBool()) {
 			return ((IBool)x).getValue();
 		}
-		if (x.getType().isNode()){
-		  System.out.println("Oh dear we have a node: "+x.toString());
-      //INode n = (INode) x;
-		  return x;
-      //Class<?> cls = Class.forName(S);
-      //Object obj = cls.newInstance();		  
-		}
-		//if (x.getType().isNode() && ((IConstructor)x).arity() == 1) {
+		if (x.getType().isNode() && ((IConstructor)x).arity() == 1) {
 			// hack: to get names out of defs.
-		//	return ((IString)((INode)x).get(0)).getValue();
-		//}
+			return ((IString)((INode)x).get(0)).getValue();
+		}
 		throw new AssertionError("invalid value type " + x.getType());
 	}
 

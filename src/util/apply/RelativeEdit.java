@@ -16,4 +16,9 @@ public abstract class RelativeEdit extends Edit
   public boolean appliesToRoot(){
     return path.isEmpty();
   }
+  
+  @Override
+  public String toString() {
+    return super.toString() + "," + path;
+  }
 }

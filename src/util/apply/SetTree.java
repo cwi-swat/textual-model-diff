@@ -20,6 +20,6 @@ public class SetTree extends RelativeEdit {
   
   @Override
   public String toString() {
-    return "insert(" + super.toString() + ", " + obj + ")";
+    return "setTree(" + super.toString() + ", " + obj + ")";
   }
 }

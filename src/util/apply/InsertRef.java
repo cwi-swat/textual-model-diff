@@ -20,6 +20,6 @@ public class InsertRef extends RelativeEdit {
   
   @Override
   public String toString() {
-    return "insert(" + super.toString() + ", " + obj + ")";
+    return "insertRef(" + super.toString() + ", " + obj + ")";
   }
 }
