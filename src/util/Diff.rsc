@@ -517,7 +517,7 @@ private bool notCreateOrDelete(Edit op)
 
 public Delta order(Delta d)
   = [op | op <- d, create(_,_) := op ]
-  + orderByPathLength([op | op <- d, notCreateOrDelete(op)])
+  + [op | op <- d, notCreateOrDelete(op)] //remove order by path length
   + [op | op <- d, delete(_) := op ];
 
 public bool less(Edit e1, Edit e2)
