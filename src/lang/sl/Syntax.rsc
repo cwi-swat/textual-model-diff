@@ -14,13 +14,14 @@ module lang::sl::Syntax
 */
 
 start syntax Machine
-  = mach: "machine" TID id State * /*unordered*/ states "end";
+  = mach: "machine" TID id State * /*unordered*/ states "end"
+  | ;
   
 syntax State
-  = state: "state" TID id Transition* /*ordered*/ transitions 
+  = state: "state" TID id Trans* /*ordered*/ transitions 
   | group: TID id "{" State* /*unordered*/ states "}";
   
-syntax Transition
+syntax Trans
   = trans: NAME event "=\>" Ref ref
   ;
  

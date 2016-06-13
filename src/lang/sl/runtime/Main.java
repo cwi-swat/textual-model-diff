@@ -1,8 +1,13 @@
 package lang.sl.runtime;
 
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.Frame;
+
+import javax.swing.BoxLayout;
+
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,7 +21,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -28,13 +32,21 @@ import util.apply.Delta;
 import util.apply.Patchable;
 
 public class Main implements Patchable {
-	private Queue<Delta> deltaQueue;
-	private SLPatch system;
+  private static final int FRAME_WIDTH = 260;
+  private static final int FRAME_HEIGHT = 210;
+  private static final int FRAME_X_POSITION = 400;
+  private static final int FRAME_Y_POSTION = 100;
+  private static final int EVENTS_HEIGHT = 64;
+  private static final int FONT_SIZE = 14;
+  private static final int BUTTON_FONT_SIZE = 14;
+  
+  private Queue<Delta> deltaQueue;
+	private SMLApply system;
 	private ByteArrayOutputStream boas = new ByteArrayOutputStream();
 
 	public Main() {
 		this.deltaQueue = new ConcurrentLinkedQueue<Delta>();
-		this.system = new SLPatch(new PrintStream(boas));
+		this.system = new SMLApply(new PrintStream(boas));
 	}
 
 	@Override
@@ -51,22 +63,20 @@ public class Main implements Patchable {
 	
 	private void printMachine(Mach m, StringWriter w) {
 		// * <name> <visited> {<events>}
-		w.append("  | State      | #  | Events\n");
-		w.append("--+------------+----+---------------\n");
+		w.append("  | State  | # | Events\n");
+		w.append("--+--------+---+---------------\n");
 		List<Element> states = new ArrayList<>();
 		states.addAll(m.states);
 		while (!states.isEmpty()) {
 			Element s = states.remove(0);
 			if (s instanceof State) {
-				String cur = m.currentState == s ? "*" : " ";
+				String cur = m.state == s ? "*" : " ";
 				List<Trans> ts = ((State)s).transitions;
 				List<String> es = new ArrayList<>();
 				for (Trans t: ts) {
 					es.add(t.event);
 				}
-								
-				w.append(String.format("%s | %10s | %2d | %s\n", cur, s.id, ((State) s).visits, Arrays.toString(es.toArray())));	
-			
+				w.append(String.format("%s | %6s | %1d | %s\n", cur, s.id, ((State) s).count, Arrays.toString(es.toArray())));	
 			}
 			else if (s instanceof Group) {
 				states.addAll(((Group)s).states);
@@ -74,35 +84,41 @@ public class Main implements Patchable {
 		}
 	}
 	
-	private void addEventButtons(final Mach m, JPanel events, final JTextArea status) {
+	private void addEventButtons(final Mach m, JFrame frame, JPanel events, final JTextArea status) {
 		List<Element> states = new ArrayList<>();
 		states.addAll(m.states);
+    String name = "State Machine: "+m.id;
+    frame.setTitle(name);
+		
 		while (!states.isEmpty()) {
 			Element s = states.remove(0);
 			if (s instanceof State) {
 				for (final Trans t: ((State)s).transitions) {
 					System.out.println("Adding button for " + t.event);
 					JButton b = new JButton(t.event);
-					Font font = new Font("Monaco", Font.PLAIN, 16);
-					b.setFont(font);					
+				  //b.setPreferredSize(new Dimension(80, 40));
+					Font font = new Font("Monaco", Font.PLAIN, BUTTON_FONT_SIZE);
+					b.setFont(font);
+					b.setAlignmentX(JButton.CENTER_ALIGNMENT);
 					b.addActionListener(new ActionListener() {
 						
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							StringWriter w = new StringWriter();
 							try {
-								system.getMachine().step(t.event, w);
+								Delta delta = system.getMachine().step(system, t.event, w);								
+								deltaQueue.add(delta);
 							} catch (IOException e1) {
 								e1.printStackTrace();
 							}
-							showMachine(m, status);
+							showMachine(m, status);	
 						}
 
 						private void showMachine(final Mach m,
 								final JTextArea status) {
 							StringWriter sw = new StringWriter();
 							printMachine(m, sw);
-							status.setText(sw.toString());
+							status.setText(sw.toString());							
 						}
 					});
 					events.add(b);
@@ -121,16 +137,18 @@ public class Main implements Patchable {
 
 		final Container panel = frame.getContentPane();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		Font font = new Font("Monaco", Font.PLAIN, 16);
-		final JTextArea status = new JTextArea(6, 20);
-		//status.setPreferredSize(new Dimension(420, 200));
-		//status.setSize(420, 200);
+		Font font = new Font("Monaco", Font.PLAIN, FONT_SIZE);
+		final JTextArea status = new JTextArea(5, 20);
 		status.setFont(font);
 		JScrollPane logPane = new JScrollPane(status); 
 		status.setEditable(false);
 		
 		final JPanel events = new JPanel();
-		events.setLayout(new FlowLayout());
+	  //events.setLayout(new BoxLayout(events, BoxLayout.X_AXIS));
+		events.setLayout(new FlowLayout(FlowLayout.CENTER, 0, 2));
+		Dimension eventsDimension = new Dimension(FRAME_WIDTH, EVENTS_HEIGHT);
+		events.setPreferredSize(eventsDimension);
+		events.setMaximumSize(eventsDimension);
 		
 		Timer poller = new Timer(100, new ActionListener() {
 			
@@ -142,16 +160,17 @@ public class Main implements Patchable {
 					status.setText("applying delta");
 					system.apply(d);
 					Mach m = system.getMachine();
-					if (m.currentState == null) {
-						m.init(m.findInitial());
+					if (m.state == null) {
+						Delta delta = m.setCurrentState(system, m.findInitial());
+						deltaQueue.add(delta);
 					}
 					StringWriter sw = new StringWriter();
 					printMachine(m, sw);
 					status.setText(sw.toString());
 					events.removeAll();
-					addEventButtons(m, events, status);
+					addEventButtons(m, frame, events, status);
 					frame.pack();
-					frame.setSize(420, 200);
+					frame.setSize(FRAME_WIDTH, FRAME_HEIGHT);
 					events.invalidate();
 					events.repaint();
 				}
@@ -163,8 +182,7 @@ public class Main implements Patchable {
 		
 		frame.pack();
 		frame.setLocationRelativeTo(null);
-		frame.setSize(420, 200);
-		frame.setLocation(400, 100);
+    frame.setSize(FRAME_WIDTH, FRAME_HEIGHT);
 		frame.setAlwaysOnTop(true);
 		frame.setVisible(true);
 		poller.start();

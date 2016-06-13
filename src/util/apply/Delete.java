@@ -2,7 +2,7 @@ package util.apply;
 
 public class Delete extends Edit
 {
-  Delete(Object owner) {
+  public Delete(Object owner) {
     super(owner);
   }
 

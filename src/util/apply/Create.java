@@ -1,10 +1,9 @@
 package util.apply;
 
-
 public class Create extends Edit {
 	private String klass;
 
-	Create(Object owner, String klass) {
+	public Create(Object owner, String klass) {
 		super(owner);
 		this.klass = klass;
 	}

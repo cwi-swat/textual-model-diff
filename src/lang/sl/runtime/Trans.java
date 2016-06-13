@@ -5,5 +5,5 @@ public class Trans {
 	public State target = null;
 	
 	// Runtime
-	int numberOfFirings = 0;
+	//int numberOfFirings = 0;
 }

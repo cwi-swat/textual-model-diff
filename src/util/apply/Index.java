@@ -2,8 +2,6 @@ package util.apply;
 
 import java.util.List;
 
-import lang.sl.runtime.PathElement;
-
 public class Index extends PathElement {
 
 	private int index;

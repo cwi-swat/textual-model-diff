@@ -1,6 +1,5 @@
 package util.apply;
 
-import lang.sl.runtime.PathElement;
 
 public class Path {
 	

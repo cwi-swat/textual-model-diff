@@ -16,7 +16,7 @@ import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
 import util.apply.Delta;
 import util.apply.Edit;
 import util.apply.Factory;
-import util.apply.Patch;
+import util.apply.Apply;
 import util.apply.Patchable;
 
 public class RuntimeDiff {

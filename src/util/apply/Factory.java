@@ -3,8 +3,6 @@ package util.apply;
 import java.util.ArrayList;
 import java.util.List;
 
-import lang.sl.runtime.PathElement;
-
 import org.eclipse.imp.pdb.facts.IBool;
 import org.eclipse.imp.pdb.facts.IConstructor;
 import org.eclipse.imp.pdb.facts.IInteger;
@@ -34,39 +32,13 @@ public class Factory {
 	public static final Type Delta =
 			tf.aliasType(Diff, "Delta", tf.listType(Edit));
 
+  /*
 	public static final Type Edit_setPrim =
 			tf.constructor(Diff, Edit, "setPrim", 
 					tf.sourceLocationType(), "object",
 					Path, "path",
 					tf.valueType(), "x");
 
-	/*public static final Type Edit_setTree =
-	      tf.constructor(Diff, Edit, "setTree", 
-	          tf.sourceLocationType(), "object",
-	          Path, "path",
-	          tf.valueType(), "tree");
-   */
-	 /*
-   public static final Type Edit_setRef =
-       tf.constructor(Diff, Edit, "setref", 
-           tf.sourceLocationType(), "object",
-           Path, "path",
-           tf.valueType(), "ref");
-   */
-	/*
-   public static final Type Edit_insertRef =
-       tf.constructor(Diff, Edit, "insertRef", 
-           tf.sourceLocationType(), "object",
-           Path, "path",
-           tf.valueType(), "ref");
-   */
-	/*
-	public static final Type Edit_insertTree =
-			tf.constructor(Diff, Edit, "insertTree", 
-					tf.sourceLocationType(), "object",
-					Path, "path",
-					tf.sourceLocationType(), "tree");
-  */
 	public static final Type Edit_remove =
 			tf.constructor(Diff, Edit, "remove", 
 					tf.sourceLocationType(), "object",
@@ -80,6 +52,7 @@ public class Factory {
 	public static final Type Edit_delete = 
 	    tf.constructor(Diff, Edit, "delete",
 	        tf.sourceLocationType(), "object");
+	*/
 	
 	public static List<Edit> convert(IValue value) {
 		if (value.getType().isSubtypeOf(Delta)) {
@@ -107,21 +80,12 @@ public class Factory {
     {
       Path path = convertPath((IList)v.get("path"));
       
-		  if (n.equals("setTree")) {
-		    return new SetTree(key, path, convertValue(v.get("tree")));
-		  }
-		  else if (n.equals("setRef")) {
-        return new SetRef(key, path, convertValue(v.get("ref")));
-      }
-		  else if (n.equals("setPrim")) {
-        return new SetPrim(key, path, convertValue(v.get("x")));
+		  if (n.equals("setPrim")) {
+        return new Set(key, path, convertValue(v.get("x")));
       }
 		  else if (n.equals("insertRef")) {
-		    return new InsertRef(key, path, v.get("ref"));
+		    return new Insert(key, path, v.get("ref"));
 		  }
-      else if (n.equals("insertTree")) {
-        return new InsertTree(key, path, v.get("tree"));
-      }		  
       else if (n.equals("remove")) {
 		    return new Remove(key, path);
   		}

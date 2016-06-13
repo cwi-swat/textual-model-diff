@@ -1,6 +1,5 @@
 package util.apply;
 
-import lang.sl.runtime.PathElement;
 
 public class Field extends PathElement {
 
@@ -31,8 +30,8 @@ public class Field extends PathElement {
 	public void assign(Object owner, Object obj) {
 		java.lang.reflect.Field field;
 		try {
-			field = owner.getClass().getField(name);
-			System.err.println("Assigning " + owner + "." + name + " = " + obj);
+      System.err.println("Assigning " + owner + "." + name + " = " + obj);
+		  field = owner.getClass().getField(name);
 			field.set(owner, obj);
 		} catch (SecurityException e) {
 			throw new RuntimeException(e);

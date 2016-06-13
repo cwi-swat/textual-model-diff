@@ -16,13 +16,13 @@ loc NULL_LOC = |null://null|(0,0,<0,0>,<0,0>);
 public Machine setScope(Machine m: mach(Name name, list[State] states))
  = mach(name, [setScope(scope(m), s, [name.name]) | s <- states])[@location = m.id@location][@scope = []];
 
-public State setScope(Scope st, State s: state(Name name, list[Transition] transitions), list[str] scope)
+public State setScope(Scope st, State s: state(Name name, list[Trans] transitions), list[str] scope)
  = state(name, [setScope(st, t, scope)| t <- transitions, bprintln(t)])[@location = s.id@location][@scope = scope];
 
 public State setScope(Scope st, State g: group(Name name, list[State] states), list[str] scope)
  = group(name, [setScope(st, s, scope + [name.name]) | s <- states])[@location = g.id@location][@scope = scope];
 
-public Transition setScope(Scope st, Transition t: trans(str event, Ref r), list[str] scope)
+public Trans setScope(Scope st, Trans t: trans(str event, Ref r), list[str] scope)
  = trans(event, setScope(st, r, [], scope))[@location = t@location][@scope = scope];
 
 public Ref setScope(Scope st, Ref r: simple(str refName), list[str] name, list[str] scope)
@@ -34,14 +34,10 @@ public Ref setScope(Scope st, Ref r: qualified(str refName, Ref restName), list[
 
 
 list[str] getName(Ref r: simple(str n), list[str] name)
-{
-  return name + [n];
-}
+ = name + [n];
 
 list[str] getName(Ref r: qualified(str n, Ref ref), list[str] name)
-{
-  return getName(ref, name + [n]);
-}
+ = getName(ref, name + [n]);
 
 public Scope scope(Machine m: mach(Name name, list[State] states))
  = scope("",
@@ -151,7 +147,7 @@ public NameGraph getNameGraph(Machine m)
     {
       defs += {s@location};
     }
-    case Transition t:
+    case Trans t:
     {
       ;//defs += {t@location};
     }

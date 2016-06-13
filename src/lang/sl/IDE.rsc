@@ -2,7 +2,6 @@ module lang::sl::IDE
 
 import lang::sl::Syntax;
 import lang::sl::AST;
-import lang::sl::NameAnalyzer;
 import lang::sl::DiffSL;
 import util::Diff;
 
