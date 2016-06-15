@@ -9,13 +9,29 @@ public class Path
     this.elts = elts;
   }
 
-  public Object resolve(Object owner)
+  public Object deref(Object owner)
   {
     for (int i = 0; i < elts.length; i++)
     {
       owner = elts[i].deref(owner);
     }
     return owner;
+  }
+  
+  public void insert(Object owner, Object obj)
+  {
+    if (!isEmpty())
+    {
+      for (int i = 0; i < elts.length - 1; i++)
+      {
+        owner = elts[i].deref(owner);
+      }
+      elts[elts.length - 1].insert(owner, obj);
+    }
+    else
+    {
+      System.err.println("Error assigning " + owner + " = " + obj);
+    }  
   }
   
   public void assign(Object owner, Object obj)
@@ -30,7 +46,6 @@ public class Path
     }
     else
     {
-      // FIXME: here we have to unify a rascal node with an existing object
       System.err.println("Error assigning " + owner + " = " + obj);
     }
   }

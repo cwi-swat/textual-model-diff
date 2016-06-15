@@ -16,7 +16,7 @@ public class Remove extends RelativeEdit
   public Object getRemoved(Apply system)
   {
     Object owner = system.lookup(getOwnerKey());
-    return this.getPath().resolve(owner);
+    return this.getPath().deref(owner);
   } 
   
   @Override

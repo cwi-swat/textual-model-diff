@@ -58,6 +58,12 @@ public class Field extends PathElement
   }
 
   @Override
+  public void insert(Object owner, Object obj)
+  {
+    assign(owner, obj);
+  }
+  
+  @Override
   public void delete(Object owner)
   {
     java.lang.reflect.Field field;

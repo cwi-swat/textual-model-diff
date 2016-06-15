@@ -99,15 +99,8 @@ public class Apply implements Visitor
   public void visit(Remove edit)
   {
     System.out.println(edit.toString());
-    if (edit.getPath().isEmpty())
-    {
-      objectSpace.remove(edit.getOwnerKey());
-    }
-    else
-    {
-      Object owner = lookup(edit.getOwnerKey());
-      edit.getPath().delete(owner);
-    }
+    Object owner = lookup(edit.getOwnerKey());
+    edit.getPath().delete(owner);
   }
 
   @Override
@@ -137,7 +130,7 @@ public class Apply implements Visitor
     }
     //FIXME: insert primitive values
     Object owner = lookup(edit.getOwnerKey());
-    edit.getPath().assign(owner, obj);
+    edit.getPath().insert(owner, obj);
   }
 
   @Override

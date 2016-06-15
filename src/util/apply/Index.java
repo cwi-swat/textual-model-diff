@@ -22,9 +22,16 @@ public class Index extends PathElement
   @Override
   public void assign(Object owner, Object obj)
   {
-    ((List) owner).add(index, obj);
+    ((List) owner).set(index, obj);
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @Override
+  public void insert(Object owner, Object obj)
+  {
+    ((List) owner).add(index, obj);
+  }
+  
   @SuppressWarnings("rawtypes")
   @Override
   public void delete(Object owner)
