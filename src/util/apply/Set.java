@@ -8,12 +8,22 @@ public class Set extends RelativeEdit
   {
     super(owner, path);
     this.obj = obj;
-  }
-
-  public Object getValue()
+  }  
+  
+  public Object getValue(Apply system)
   {
-    return obj;
-  }
+    //return object
+    Object val = system.lookup(obj);
+    
+    //or value
+    if(val == null)
+    {
+      val = obj;
+    }
+    
+    return val;
+  }  
+  
 
   @Override
   public void accept(Visitor v)

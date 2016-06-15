@@ -120,7 +120,7 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
     }
   }
 
-  ops += [ remove(l1, []) | <loc l1, _, node n1> <- r1, l1 notin mapping.id ]; 
+  ops += [ delete(l1) | <loc l1, _, node n1> <- r1, l1 notin mapping.id ]; 
 
   return ops;
 }

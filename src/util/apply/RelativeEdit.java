@@ -13,12 +13,7 @@ public abstract class RelativeEdit extends Edit
   public Path getPath()
   {
     return path;
-  }
-
-  public boolean appliesToRoot()
-  {
-    return path.isEmpty();
-  }
+  }  
 
   @Override
   public String toString()

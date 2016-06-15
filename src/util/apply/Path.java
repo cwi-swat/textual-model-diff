@@ -9,6 +9,15 @@ public class Path
     this.elts = elts;
   }
 
+  public Object resolve(Object owner)
+  {
+    for (int i = 0; i < elts.length; i++)
+    {
+      owner = elts[i].deref(owner);
+    }
+    return owner;
+  }
+  
   public void assign(Object owner, Object obj)
   {
     if (!isEmpty())

@@ -1,31 +1,35 @@
 package util.apply;
 
-public class Create extends Edit {
-	private String klass;
+public class Create extends Edit
+{
+  private String klass;
 
-	public Create(Object owner, String klass) {
-		super(owner);
-		this.klass = klass;
-	}
+  public Create(Object owner, String klass)
+  {
+    super(owner);
+    this.klass = klass;
+  }
 
-	public String getKlass() {
-		return klass;
-	}
+  public String getKlass()
+  {
+    return klass;
+  }
+  
+  public Object getCreated(Apply system)
+  {
+    return getOwner(system);
+  }
 
-	@Override
-	public void accept(Visitor v) {
-		v.visit(this);
-	}
-	
-	@Override
-	public boolean appliesToRoot(){
-	  return true;
-	}
-	
-	@Override
-	public String toString() {
-		return "create(" + super.toString() + ", " + klass + ")";
-	}
-	
-	
+  @Override
+  public void accept(Visitor v)
+  {
+    v.visit(this);
+  }
+
+  @Override
+  public String toString()
+  {
+    return "create(" + super.toString() + ", " + klass + ")";
+  }
+
 }

@@ -1,15 +1,11 @@
 package lang.sl.runtime;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import util.apply.*;
 
 public class SMLApply extends Apply
-{
+{ 
   public SMLApply(PrintStream log)
   {
     super(log);
@@ -23,50 +19,41 @@ public class SMLApply extends Apply
   }
 
   @Override
-  public void visit(Remove remove)
-  {
-    if (remove.appliesToRoot() && lookup(remove.getOwnerKey()) == machine.state)
-    {
-      State start = machine.findInitial();
-
-      if (start == null)
-      {
-        log.println("Removed current state and no initial found.");
-      }
-      else
-      {
-        // machine.currentState = start;
-        apply(machine.setCurrentState(this, start));
-      }
-    }
-    super.visit(remove);
-  }
-
-  @Override
   public void visit(Create create)
   {
     super.visit(create);
-    boolean update = false;
-    if (create.appliesToRoot() && lookup(create.getOwnerKey()) instanceof State)
+    Object newObject = create.getCreated(this);
+    if (newObject instanceof Mach)
     {
-      log.println("Created a new state");
-      update = true;
+      System.out.println("Created new state machine.");
+      this.machine = (Mach) newObject;
     }
-    if (create.appliesToRoot() && lookup(create.getOwnerKey()) instanceof Mach)
+  }
+  
+  @Override
+  public void visit(Insert insert)
+  {
+    super.visit(insert);
+    
+    Object inserted = insert.getInserted(this);
+    if (inserted instanceof State && machine.state == null)
     {
-      log.println("Created a new machine");
-      this.machine = (Mach) lookup(create.getOwnerKey());
-      update = true;
+      System.out.println("Inserted state in unitialized machine: set initial state");
+      //machine.state = machine.findInitial();
+      apply(machine.init(this));
     }
-    if (update && machine != null && machine.state == null)
+  }
+  
+  @Override
+  public void visit(Remove remove)
+  {
+    Object removed = remove.getRemoved(this);
+    super.visit(remove);
+    if (removed == machine.state)
     {
-      log.println("Reinit of initial state");
-      // machine.currentState = machine.findInitial();
-      State start = machine.findInitial();
-      if (start != null)
-      {
-        apply(machine.setCurrentState(this, start));
-      }
+      System.out.println("Removed initial state: set initial state");
+      //machine.state = machine.findInitial();  
+      apply(machine.init(this));
     }
   }
 }

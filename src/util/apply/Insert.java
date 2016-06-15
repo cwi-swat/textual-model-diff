@@ -2,7 +2,7 @@ package util.apply;
 
 public class Insert extends RelativeEdit
 {
-  private Object obj;
+  private Object obj; //actual object to insert!
 
   public Insert(Object owner, Path path, Object obj)
   {
@@ -13,6 +13,20 @@ public class Insert extends RelativeEdit
   public Object getInsertedKey()
   {
     return obj;
+  }
+  
+  public Object getInserted(Apply system)
+  {
+    //return object
+    Object val = system.lookup(obj);
+    
+    //or value
+    if(val == null)
+    {
+      val = obj;
+    }
+    
+    return val;
   }
 
   @Override

@@ -17,23 +17,38 @@ public class Mach
   // Runtime
   public State state;
 
-  public Delta setCurrentState(Apply system, State s)
+  public Delta init(Apply system)
+  {
+    return setState(system, findInitial());
+  }
+  
+  public Delta setState(Apply system, State s)
   {
     List<Edit> edits = new ArrayList<>();
     Map<Object, Object> mapping = new HashMap<>();
-    Field[] currentState = { new Field("state") };
-    Path path = new Path(currentState);
-    Object mLoc = system.getKey(this);
-    Object sLoc = system.getKey(s);
-    util.apply.Insert setCurState = new util.apply.Insert(mLoc, path, sLoc);
-    edits.add(setCurState);
-    return new Delta(edits, mapping);
+    Delta delta = new Delta(edits, mapping);
+    if(system != null)
+    {
+      Field[] currentState = { new Field("state") };
+      Path path = new Path(currentState);
+      Object mKey = system.getKey(this);
+      
+      Object sKey = null;
+      if(s != null)
+      {
+         sKey = system.getKey(s);
+      }      
+      util.apply.Set setCurState = new util.apply.Set(mKey, path, sKey);
+      edits.add(setCurState);
+    }
+    return delta;
   }
 
   public Delta step(Apply system, String event, Writer output) throws IOException
   {
     List<Edit> edits = new ArrayList<>();
     Map<Object, Object> mapping = new HashMap<>();
+    Delta delta = new Delta(edits, mapping);
     Field[] stateFields = { new Field("state") };
     Field[] countFields = { new Field("count") };
 
@@ -56,7 +71,7 @@ public class Mach
         Object tLoc = system.getKey(target);
 
         // set new state
-        util.apply.Insert cur = new util.apply.Insert(mLoc, new Path(stateFields), tLoc);
+        util.apply.Set cur = new util.apply.Set(mLoc, new Path(stateFields), tLoc);
         edits.add(cur);
 
         // set increment
@@ -66,7 +81,7 @@ public class Mach
         break;
       }
     }
-    return new Delta(edits, mapping);
+    return delta;
   }
 
   public State findInitial()

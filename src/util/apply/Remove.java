@@ -12,7 +12,13 @@ public class Remove extends RelativeEdit
   {
     v.visit(this);
   }
-
+  
+  public Object getRemoved(Apply system)
+  {
+    Object owner = system.lookup(getOwnerKey());
+    return this.getPath().resolve(owner);
+  } 
+  
   @Override
   public String toString()
   {
