@@ -58,7 +58,7 @@ public void sml_register()
         //println("Mapping\n----------\n");
         mapping = fix(mapping);
         //iprintln(mapping);        
-        flatDelta += [rekey(key,mapping[key]) | key <- mapping];        
+        flatDelta += [rekey(key,mapping[key]) | key <- mapping, key != mapping[key]];
         //println("----------\n");              
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);
@@ -73,7 +73,7 @@ public void sml_register()
         str prettyDelta = delta2str(delta);
         //println("Mapping\n----------\n");
         //iprintln(mapping);
-        flatDelta += [rekey(key,mapping[key]) | key <- mapping];
+        flatDelta += [rekey(key,mapping[key]) | key <- mapping, key != mapping[key]];
         //println("----------\n");
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);

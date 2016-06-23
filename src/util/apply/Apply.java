@@ -8,11 +8,17 @@ public class Apply implements Visitor
 {
   Map<Object, Object>   objectSpace;
   protected PrintStream log;
+  Delta history = new Delta();
 
   public Apply(PrintStream log)
   {
     this.objectSpace = new HashMap<Object, Object>();
     this.log = log;
+  }
+  
+  public Delta getHistory()
+  {
+    return history;
   }
 
   public Object getKey(Object value)
@@ -26,54 +32,18 @@ public class Apply implements Visitor
     }
     return null;
   }
-
+  
   public void apply(Delta delta)
   {
     System.out.println("----------\nTransition\n----------");
-    for (Edit e : delta.getEdits())
+    for (Edit edit: delta.getEdits())
     {
-      System.out.println("Applying:" + e.toString());
-      e.accept(this);
+      System.out.println("Applying:" + edit.toString());
+      history.add(edit);
+      edit.accept(this);
     }
-    //rekey(delta.getMapping());
-
-    System.out.println("----------\nState\n----------" + this.toString());
+    System.out.println("----------\nState\n----------\n" + this.toString());
   }
-
-  /*
-  private void rekey(Map<Object, Object> mapping)
-  {
-    // log.println("Current OBJECTSPACE");
-    // for (Object o: objectSpace.keySet()) {
-    // log.println("Object: " + o + " = " + objectSpace.get(o));
-    // }
-
-    Map<Object, Object> newObjectSpace = new HashMap<Object, Object>();
-
-    for (Object oldKey : mapping.keySet())
-    {
-      assert objectSpace.containsKey(oldKey);
-      Object obj = objectSpace.remove(oldKey);
-      Object newKey = mapping.get(oldKey);
-      newObjectSpace.put(newKey, obj);
-    }
-
-    // Bring over ids that are not mapped to new ones.
-    // UGH: this is not correct I think.
-    for (Object obj : objectSpace.keySet())
-    {
-      if (!mapping.containsKey(obj))
-      {
-        newObjectSpace.put(obj, objectSpace.get(obj));
-      }
-    }
-
-    objectSpace = newObjectSpace;
-    // log.println("REKEYED OBJECTSPACE");
-    // for (Object o: objectSpace.keySet()) {
-    // log.println("Object: " + o + " = " + objectSpace.get(o));
-    // }
-  }*/
 
   @Override
   public void visit(Create edit)
@@ -84,13 +54,16 @@ public class Apply implements Visitor
       Class<?> cls = Class.forName(edit.getKlass());
       Object obj = cls.newInstance();
       objectSpace.put(edit.getOwnerKey(), obj);
-    } catch (ClassNotFoundException e)
+    }
+    catch (ClassNotFoundException e)
     {
       throw new RuntimeException(e);
-    } catch (InstantiationException e)
+    }
+    catch (InstantiationException e)
     {
       throw new RuntimeException(e);
-    } catch (IllegalAccessException e)
+    }
+    catch (IllegalAccessException e)
     {
       throw new RuntimeException(e);
     }
@@ -154,7 +127,7 @@ public class Apply implements Visitor
 
   public String toString()
   {
-    String r = "";
+    String r = "object space:\n";
     for (Object key : objectSpace.keySet())
     {
       Object obj = objectSpace.get(key);
@@ -177,6 +150,12 @@ public class Apply implements Visitor
           r += String.format("\t%10s = %s\n", fieldName, fieldValue);
         }
       }
+    }
+    
+    r += "history:\n";
+    for(Edit edit: history.getEdits())
+    {
+      r += edit.toString() + "\n";
     }
     return r;
   }
