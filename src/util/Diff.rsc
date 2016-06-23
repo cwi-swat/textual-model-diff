@@ -38,6 +38,7 @@ data Edit
   | setPrim(loc object, Path path, value x)
   | setRef(loc object, Path path, loc ref)
   | insertRef(loc object, Path path, loc ref)
+  | rekey(loc object, loc ref)
   //syntactic sugar -->
   | setTree(loc object, Path path, node tree)
   | insertTree(loc object, Path path, node tree)
@@ -120,7 +121,7 @@ list[Edit] theDiff(IDClassMap r1, IDClassMap r2, NameGraph g1, NameGraph g2,
     }
   }
 
-  ops += [ delete(l1) | <loc l1, _, node n1> <- r1, l1 notin mapping.id ]; 
+  ops += [ delete(l1) | <loc l1, _, node n1> <- r1, l1 notin mapping.id ];
 
   return ops;
 }

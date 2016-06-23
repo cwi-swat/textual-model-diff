@@ -28,6 +28,12 @@ public class SMLApply extends Apply
       System.out.println("Created new state machine.");
       this.machine = (Mach) newObject;
     }
+    else if(newObject instanceof State)
+    {
+      System.out.println("Created new state.");
+      State s = (State) newObject;
+      apply(s.init(this));
+    }
   }
   
   @Override

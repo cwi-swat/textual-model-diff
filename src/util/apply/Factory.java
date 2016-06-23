@@ -82,6 +82,10 @@ public class Factory {
     {
       return new Delete(key);
     }
+    else if(n.equals("rekey"))
+    {
+      return new Rekey(key, v.get("ref"));
+    }
     else
     {
       Path path = convertPath((IList) v.get("path"));

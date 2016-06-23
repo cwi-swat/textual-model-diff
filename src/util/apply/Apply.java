@@ -29,17 +29,18 @@ public class Apply implements Visitor
 
   public void apply(Delta delta)
   {
-    System.out.println("----------\nTransition\n----------\n");
+    System.out.println("----------\nTransition\n----------");
     for (Edit e : delta.getEdits())
     {
-      log.println("Applying: " + e.getClass());
+      System.out.println("Applying:" + e.toString());
       e.accept(this);
     }
-    rekey(delta.getMapping());
+    //rekey(delta.getMapping());
 
-    System.out.println("----------\nState\n----------\n" + this.toString());
+    System.out.println("----------\nState\n----------" + this.toString());
   }
 
+  /*
   private void rekey(Map<Object, Object> mapping)
   {
     // log.println("Current OBJECTSPACE");
@@ -72,7 +73,7 @@ public class Apply implements Visitor
     // for (Object o: objectSpace.keySet()) {
     // log.println("Object: " + o + " = " + objectSpace.get(o));
     // }
-  }
+  }*/
 
   @Override
   public void visit(Create edit)
@@ -142,6 +143,13 @@ public class Apply implements Visitor
     Object value = edit.getValue(this);
         
     edit.getPath().assign(owner, value);
+  }
+  
+  public void visit(Rekey edit)
+  {
+    Object owner = edit.getOwner(this);
+    objectSpace.remove(edit.getOwnerKey());
+    objectSpace.put(edit.getNewKey(), owner);
   }
 
   public String toString()

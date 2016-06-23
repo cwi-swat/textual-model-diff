@@ -7,4 +7,5 @@ public interface Visitor
   void visit(Remove edit);
   void visit(Insert edit);
   void visit(Set edit);
+  void visit(Rekey edit);
 }

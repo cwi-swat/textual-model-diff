@@ -55,29 +55,31 @@ public void sml_register()
         //prevAst = readTextValueFile(#lang::sml::AST::Machine, prevLoc);
         <delta, flatDelta, mapping> = diffSL(prevLoc, curLoc);
         str prettyDelta = delta2str(delta);
-        println("Mapping\n----------\n");
+        //println("Mapping\n----------\n");
         mapping = fix(mapping);
-        iprintln(mapping);
-        println("----------\n");              
+        //iprintln(mapping);        
+        flatDelta += [rekey(key,mapping[key]) | key <- mapping];        
+        //println("----------\n");              
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);
         println("Sending delta");     
         iprintln(flatDelta);
-        sendDelta(system, flatDelta, mapping);
+        sendDelta(system, flatDelta);
       }
       else {
         firstRun = false;
         println("Initial run; creating.");
         <delta, flatDelta, mapping> = createSL(tree);        
         str prettyDelta = delta2str(delta);
-        println("Mapping\n----------\n");
-        iprintln(mapping);
-        println("----------\n");
+        //println("Mapping\n----------\n");
+        //iprintln(mapping);
+        flatDelta += [rekey(key,mapping[key]) | key <- mapping];
+        //println("----------\n");
         println("Edit script\n----------\n<prettyDelta>----------");
         iprintln(delta);
         println("Sending delta");     
         iprintln(flatDelta);       
-        sendDelta(system, flatDelta, mapping);
+        sendDelta(system, flatDelta);
       }
       
 

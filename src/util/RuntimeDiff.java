@@ -13,11 +13,7 @@ import org.eclipse.imp.pdb.facts.IValue;
 import org.eclipse.imp.pdb.facts.IValueFactory;
 import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
 
-import util.apply.Delta;
-import util.apply.Edit;
-import util.apply.Factory;
-import util.apply.Apply;
-import util.apply.Patchable;
+import util.apply.*;
 
 public class RuntimeDiff {
 	private static Map<Integer, Queue<Delta>> queues = new HashMap<Integer, Queue<Delta>>();
@@ -51,17 +47,18 @@ public class RuntimeDiff {
 		}
 	}
 	
-	public void sendDelta(IInteger id, IList delta, IMap mapping) {
+	public void sendDelta(IInteger id, IList delta){ //, IMap mapping) {
 		System.out.println("id = " + id);
 		int systemId = Integer.parseInt(id.getStringRepresentation());
 		List<Edit> objDelta = Factory.convert(delta);
 		System.out.println("objDelta = " + objDelta);
-		Map<Object, Object> objMapping = new HashMap<Object, Object>();
-		for (IValue key: mapping) {
-			objMapping.put(key, mapping.get(key));
-		}
-		System.out.println("objMapping = " + objMapping);
-		Delta theDelta = new Delta(objDelta, objMapping);
+		//Map<Object, Object> objMapping = new HashMap<Object, Object>();
+		//for (IValue key: mapping) {
+		//	//objMapping.put(key, mapping.get(key));
+		//	objDelta.add(new Rekey(key, mapping.get(key)));
+		//}
+		//System.out.println("objMapping = " + objMapping);
+		Delta theDelta = new Delta(objDelta); //, objMapping);
 		if (!queues.containsKey(systemId)) {
 			throw RuntimeExceptionFactory.illegalArgument(id, null, null);
 		}

@@ -6,7 +6,7 @@ import util::Diff;
 java int requestSystem();
 
 @javaClass{util.RuntimeDiff}
-java void sendDelta(int id, Delta delta, map[loc, loc] mapping);
+java void sendDelta(int id, Delta delta);
 
 @javaClass{util.RuntimeDiff}
 java void runInterpreter(int id, str appClass);
