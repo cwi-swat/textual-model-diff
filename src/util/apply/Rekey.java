@@ -22,9 +22,14 @@ public class Rekey extends Edit
   }
   
   @Override
+  public Edit reverse()
+  {
+    return new Rekey(newKey, getOwnerKey());
+  }
+  
+  @Override
   public String toString()
   {
     return "rekey(" + super.toString() + ", " + newKey + ")";
-  }  
-  
+  }
 }

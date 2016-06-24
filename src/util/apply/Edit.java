@@ -21,8 +21,11 @@ public abstract class Edit
 
   public abstract void accept(Visitor v);
 
+  public abstract Edit reverse();
+  
   public String toString()
   {
     return key + "";
   }
+  
 }

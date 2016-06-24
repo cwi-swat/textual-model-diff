@@ -31,6 +31,16 @@ public class Delta
   {
     return edits;
   }
+  
+  public Delta reverse()
+  {
+    Delta reverse = new Delta();  
+    for(int pos = edits.size()-1; pos >= 0; pos--)
+    {
+      reverse.add(edits.get(pos).reverse());
+    }
+    return reverse;
+  }
 
   /*public Map<Object, Object> getMapping()
   {

@@ -2,28 +2,28 @@ package util.apply;
 
 public class Insert extends RelativeEdit
 {
-  private Object obj; //actual object to insert!
+  private Object val; //reference or value to be inserted
 
   public Insert(Object owner, Path path, Object obj)
   {
     super(owner, path);
-    this.obj = obj;
+    this.val = obj;
   }
 
   public Object getInsertedKey()
   {
-    return obj;
+    return val;
   }
   
   public Object getInserted(Apply system)
   {
     //return object
-    Object val = system.lookup(obj);
+    Object val = system.lookup(this.val);
     
     //or value
     if(val == null)
     {
-      val = obj;
+      val = this.val;
     }
     
     return val;
@@ -34,10 +34,16 @@ public class Insert extends RelativeEdit
   {
     v.visit(this);
   }
-
+  
+  @Override
+  public Edit reverse()
+  {
+    return new Remove(getOwnerKey(), getPath(), val);
+  }
+  
   @Override
   public String toString()
   {
-    return "insertRef(" + super.toString() + ", " + obj + ")";
+    return "insert(" + super.toString() + ", " + val + ")";
   }
 }

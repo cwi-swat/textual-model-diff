@@ -2,9 +2,17 @@ package util.apply;
 
 public class Delete extends Edit
 {
+  private String klass;  
+  
   public Delete(Object owner)
   {
     super(owner);
+  }
+  
+  public Delete(Object owner, String klass)
+  {
+    super(owner);
+    this.klass = klass;
   }
 
   public Object getDeleted(Apply system)
@@ -17,10 +25,16 @@ public class Delete extends Edit
   {
     v.visit(this);
   }
+  
+  @Override
+  public Edit reverse()
+  {
+    return new Create(getOwnerKey(), klass);
+  }
 
   @Override
   public String toString()
   {
-    return "delete(" + super.toString() + ")";
+    return "delete(" + super.toString() + ", " + klass + ")";
   }
 }

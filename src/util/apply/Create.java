@@ -25,11 +25,16 @@ public class Create extends Edit
   {
     v.visit(this);
   }
+    
+  @Override
+  public Edit reverse()
+  {
+    return new Delete(getOwnerKey(), klass);
+  }
 
   @Override
   public String toString()
   {
     return "create(" + super.toString() + ", " + klass + ")";
   }
-
 }
