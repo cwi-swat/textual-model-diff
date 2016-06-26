@@ -7,19 +7,16 @@ import java.util.Map;
 
 public class Delta
 {
-  private List<Edit>          edits;
-  //private Map<Object, Object> mapping;
+  private List<Edit> edits;
 
-  public Delta(List<Edit> edits) //, Map<Object, Object> mapping)
+  public Delta(List<Edit> edits)
   {
     this.edits = edits;
-    //this.mapping = mapping;
   }
   
   public Delta()
   {
-    edits = new ArrayList<>();
-    //mapping = new HashMap<>();    
+    edits = new ArrayList<>();   
   }
   
   public void add(Edit edit)
@@ -41,9 +38,4 @@ public class Delta
     }
     return reverse;
   }
-
-  /*public Map<Object, Object> getMapping()
-  {
-    return mapping;
-  }*/
 }

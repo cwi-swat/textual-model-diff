@@ -38,7 +38,7 @@ public class Insert extends RelativeEdit
   @Override
   public Edit reverse()
   {
-    return new Remove(getOwnerKey(), getPath(), val);
+    return new Remove(getKey(), getPath(), val);
   }
   
   @Override

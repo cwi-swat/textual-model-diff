@@ -53,7 +53,7 @@ public class Apply implements Visitor
     {
       Class<?> cls = Class.forName(edit.getKlass());
       Object obj = cls.newInstance();
-      objectSpace.put(edit.getOwnerKey(), obj);
+      objectSpace.put(edit.getKey(), obj);
     }
     catch (ClassNotFoundException e)
     {
@@ -73,7 +73,7 @@ public class Apply implements Visitor
   public void visit(Remove edit)
   {
     System.out.println(edit.toString());
-    Object owner = lookup(edit.getOwnerKey());
+    Object owner = lookup(edit.getKey());
     edit.getPath().delete(owner);
   }
 
@@ -81,7 +81,7 @@ public class Apply implements Visitor
   public void visit(Delete edit)
   {
     System.out.println(edit.toString());
-    objectSpace.remove(edit.getOwnerKey());
+    objectSpace.remove(edit.getKey());
   }
 
   protected Object lookup(Object key)
@@ -103,7 +103,7 @@ public class Apply implements Visitor
       log.println("Object is null!!!!");
     }
     //FIXME: insert primitive values
-    Object owner = lookup(edit.getOwnerKey());
+    Object owner = lookup(edit.getKey());
     edit.getPath().insert(owner, obj);
   }
 
@@ -111,7 +111,7 @@ public class Apply implements Visitor
   public void visit(Set edit)
   {
     System.out.println(edit.toString());
-    Object owner = lookup(edit.getOwnerKey());
+    Object owner = lookup(edit.getKey());
 
     Object value = edit.getValue(this);
         
@@ -121,7 +121,7 @@ public class Apply implements Visitor
   public void visit(Rekey edit)
   {
     Object owner = edit.getOwner(this);
-    objectSpace.remove(edit.getOwnerKey());
+    objectSpace.remove(edit.getKey());
     objectSpace.put(edit.getNewKey(), owner);
   }
 

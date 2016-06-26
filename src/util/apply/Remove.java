@@ -17,7 +17,7 @@ public class Remove extends RelativeEdit
   
   public Object getRemoved(Apply system)
   {
-    Object owner = system.lookup(getOwnerKey());
+    Object owner = system.lookup(getKey());
     return this.getPath().deref(owner);
   }  
 
@@ -30,7 +30,7 @@ public class Remove extends RelativeEdit
   @Override
   public Edit reverse()
   {
-    return new Insert(getOwnerKey(),  getPath(), val);
+    return new Insert(getKey(),  getPath(), val);
   }
   
   @Override

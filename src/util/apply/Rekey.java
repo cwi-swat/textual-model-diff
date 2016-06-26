@@ -24,7 +24,7 @@ public class Rekey extends Edit
   @Override
   public Edit reverse()
   {
-    return new Rekey(newKey, getOwnerKey());
+    return new Rekey(newKey, getKey());
   }
   
   @Override

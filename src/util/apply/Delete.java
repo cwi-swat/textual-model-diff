@@ -29,7 +29,7 @@ public class Delete extends Edit
   @Override
   public Edit reverse()
   {
-    return new Create(getOwnerKey(), klass);
+    return new Create(getKey(), klass);
   }
 
   @Override

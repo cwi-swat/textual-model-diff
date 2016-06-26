@@ -41,7 +41,7 @@ public class Set extends RelativeEdit
   @Override
   public Edit reverse()
   {
-    return new Set(getOwnerKey(), getPath(), oldVal, val);
+    return new Set(getKey(), getPath(), oldVal, val);
   }
 
   @Override

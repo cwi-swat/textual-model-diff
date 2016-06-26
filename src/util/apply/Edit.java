@@ -9,7 +9,7 @@ public abstract class Edit
     this.key = owner;
   }
 
-  public Object getOwnerKey()
+  public Object getKey()
   {
     return key;
   }
