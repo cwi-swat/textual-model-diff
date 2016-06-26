@@ -9,7 +9,7 @@ import java.util.List;
 
 public class Mach
 {
-  public String id;
+  public String id; //name of the state machine
   public List<Element> states = new ArrayList<Element>();
 
   // Runtime
@@ -42,6 +42,7 @@ public class Mach
       util.apply.Set setCurState = new util.apply.Set(mKey, currentStatePath, sKey);
       delta.add(setCurState);
     }
+    
     return delta;
   }
 
@@ -62,7 +63,7 @@ public class Mach
     return delta;
   }
 
-  private State findInitial()
+  public State findInitial()
   {
     for (Element n : states)
     {

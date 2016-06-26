@@ -42,13 +42,13 @@ public class Main implements Patchable
   private static final int      BUTTON_FONT_SIZE = 14;
 
   private Queue<Delta>          deltaQueue;
-  private SMLApply              system;
+  private MigrateSML              system;
   private ByteArrayOutputStream boas             = new ByteArrayOutputStream();
 
   public Main()
   {
     this.deltaQueue = new ConcurrentLinkedQueue<Delta>();
-    this.system = new SMLApply(new PrintStream(boas));
+    this.system = new MigrateSML(new PrintStream(boas));
   }
 
   @Override

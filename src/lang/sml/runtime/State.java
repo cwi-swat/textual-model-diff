@@ -13,7 +13,7 @@ public class State extends Element
   private static final Field[] countFields = { new Field("count") };
   public static final Path countPath = new Path(countFields);
   
-  public Delta init(Apply system)
+  /*public Delta init(Apply system)
   {
     Delta delta = new Delta();
     if(system != null)
@@ -23,6 +23,6 @@ public class State extends Element
       delta.add(init);
     }
     return delta;
-  }
+  }*/
   
 }
