@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-import org.eclipse.imp.pdb.facts.IInteger;
-import org.eclipse.imp.pdb.facts.IList;
-import org.eclipse.imp.pdb.facts.IMap;
-import org.eclipse.imp.pdb.facts.IString;
-import org.eclipse.imp.pdb.facts.IValue;
-import org.eclipse.imp.pdb.facts.IValueFactory;
 import org.rascalmpl.interpreter.utils.RuntimeExceptionFactory;
+import org.rascalmpl.value.IInteger;
+import org.rascalmpl.value.IList;
+import org.rascalmpl.value.IString;
+import org.rascalmpl.value.IValueFactory;
 
-import util.apply.*;
+import util.apply.Delta;
+import util.apply.Edit;
+import util.apply.Factory;
+import util.apply.Patchable;
 
 public class RuntimeDiff {
 	private static Map<Integer, Queue<Delta>> queues = new HashMap<Integer, Queue<Delta>>();
@@ -39,11 +40,11 @@ public class RuntimeDiff {
 			queues.put(systemId, r.getQueue());
 			new Thread(r).run();
 		} catch (InstantiationException e) {
-			throw RuntimeExceptionFactory.illegalArgument(appClass, null, null);
+			throw RuntimeExceptionFactory.illegalArgument(null, null, null);
 		} catch (IllegalAccessException e) {
-			throw RuntimeExceptionFactory.illegalArgument(appClass, null, null);
+			throw RuntimeExceptionFactory.illegalArgument(null, null, null);
 		} catch (ClassNotFoundException e) {
-			throw RuntimeExceptionFactory.illegalArgument(appClass, null, null);
+			throw RuntimeExceptionFactory.illegalArgument(null, null, null);
 		}
 	}
 	
@@ -60,7 +61,7 @@ public class RuntimeDiff {
 		//System.out.println("objMapping = " + objMapping);
 		Delta theDelta = new Delta(objDelta); //, objMapping);
 		if (!queues.containsKey(systemId)) {
-			throw RuntimeExceptionFactory.illegalArgument(id, null, null);
+			throw RuntimeExceptionFactory.illegalArgument(null, null, null);
 		}
 		queues.get(systemId).add(theDelta);
 	}

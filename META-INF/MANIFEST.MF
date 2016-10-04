@@ -3,6 +3,5 @@ Bundle-ManifestVersion: 2
 Bundle-Name: textual_model_diff
 Bundle-SymbolicName: textual_model_diff
 Bundle-Version: 1.0.0
-Require-Bundle: org.eclipse.imp.pdb.values,
- rascal
+Require-Bundle: rascal
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

@@ -5,7 +5,7 @@ import util::ShellExec;
 import String;
 
 //loc INPUT = |project://textual-model-diff/input|;
-loc INPUT = |file:///Users/rozen/proj/textual-model-diff/input/|;
+loc INPUT = |file:///Users/tvdstorm/CWI/textual-model-diff/input/|;
 
 //Added by rozen (why was this code missing?)
 str gitPatienceDiff(str old, str new)
@@ -15,7 +15,7 @@ str gitPatienceDiff(str old, str new)
   str out = replaceAll(old_prefix+"_"+new_prefix,".","_")+".diff";
   
   //git diff --no-index --patience --ignore-space-change --ignore-blank-lines --ignore-space-at-eol -U0 <old> <new>
-  PID id = createProcess("./mydiff.sh", [old, new, out], INPUT);
+  PID id = createProcess("./mydiff.sh", args = [old, new, out], workingDir = INPUT, envVars = ());
   str output = readEntireStream(id);
   print(output);
   killProcess(id);

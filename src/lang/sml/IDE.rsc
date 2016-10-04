@@ -14,6 +14,7 @@ import Message;
 
 import util::RuntimeDiff;
 
+
 public str SL_NAME = "State Language"; //language name
 public str SL_EXT  = "sml"; //file extension
 
@@ -44,7 +45,7 @@ public void sml_register()
     }),
     builder(set[Message] ((&T<:Tree) tree) {
       println("Saving!");
-      loc curLoc = tree @\loc;
+      loc curLoc = tree@\loc;
       loc prevLoc = |<curLoc.scheme>://<curLoc.authority>/<curLoc.path>|[extension="prev.sml"];
       
       //println("current location = <curLoc>");
