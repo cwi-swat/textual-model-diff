@@ -3,5 +3,5 @@ Bundle-ManifestVersion: 2
 Bundle-Name: textual_model_diff
 Bundle-SymbolicName: textual_model_diff
 Bundle-Version: 1.0.0
-Require-Bundle: rascal
+Require-Bundle: rascal_eclipse
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
